@@ -1,5 +1,4 @@
 name: Build and CI
-
 on:
   push:
     branches: [ "main", "master" ]
