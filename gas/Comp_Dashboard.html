@@ -1,0 +1,193 @@
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="dashboardStats">
+  <!-- Akan diisi via JS -->
+  <div class="col-span-4 flex justify-center py-10">
+     <i class="fas fa-circle-notch fa-spin text-3xl text-indigo-600"></i>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Grafik Kehadiran Siswa -->
+  <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="font-bold text-slate-800 dark:text-slate-100 text-lg">Kehadiran Siswa (Minggu Ini)</h3>
+      <select class="text-sm bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 focus:outline-none">
+        <option>Semua Kelas</option>
+        <option>Kelas 7</option>
+        <option>Kelas 8</option>
+        <option>Kelas 9</option>
+      </select>
+    </div>
+    <div class="h-64 flex items-end justify-between gap-2 pt-4 relative border-b border-slate-200 dark:border-slate-800 pb-2">
+      <!-- Dummy Bar Chart -->
+      <div class="w-full bg-indigo-100 rounded-t-md relative group h-[90%]">
+        <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">95%</div>
+        <div class="absolute -bottom-6 w-full text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">Sen</div>
+      </div>
+      <div class="w-full bg-indigo-100 rounded-t-md relative group h-[85%]">
+        <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">92%</div>
+        <div class="absolute -bottom-6 w-full text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">Sel</div>
+      </div>
+      <div class="w-full bg-indigo-500 rounded-t-md relative group shadow-sm h-[98%]">
+        <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">98%</div>
+        <div class="absolute -bottom-6 w-full text-center text-xs text-slate-800 dark:text-slate-100 font-bold">Rab</div>
+      </div>
+      <div class="w-full bg-indigo-100 rounded-t-md relative group h-[80%]">
+        <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">88%</div>
+        <div class="absolute -bottom-6 w-full text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 font-medium">Kam</div>
+      </div>
+      <div class="w-full bg-slate-100 dark:bg-slate-800 dark:bg-slate-200 rounded-t-md relative h-[0%]">
+        <div class="absolute -bottom-6 w-full text-center text-xs text-slate-400 dark:text-slate-500 font-medium">Jum</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pengumuman / Info Terbaru -->
+  <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="font-bold text-slate-800 dark:text-slate-100 text-lg">Informasi Terbaru</h3>
+      <button class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">Lihat Semua</button>
+    </div>
+    
+    <div class="space-y-4">
+      <div class="p-4 rounded-xl border border-blue-100 bg-blue-50/50 flex gap-4 transition-colors hover:bg-blue-50">
+        <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+          <i class="fas fa-bullhorn"></i>
+        </div>
+        <div>
+          <h4 class="font-semibold text-slate-800 dark:text-slate-100 text-sm">Rapat Rutin Guru</h4>
+          <p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1 mb-2">Persiapan Evaluasi Tengah Semester Ganjil</p>
+          <div class="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
+            <i class="far fa-calendar-alt"></i> Besok, 13:00 WIB
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl border border-indigo-100 bg-indigo-50/50 flex gap-4 transition-colors hover:bg-indigo-50">
+        <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+          <i class="fas fa-trophy"></i>
+        </div>
+        <div>
+          <h4 class="font-semibold text-slate-800 dark:text-slate-100 text-sm">Juara 1 Olimpiade Matematika</h4>
+          <p class="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1 mb-2">Selamat kepada Ananda Budi (Kelas 9A)</p>
+          <div class="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
+            <i class="far fa-clock"></i> 2 hari yang lalu
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- AI Insights -->
+  <div class="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800/30 shadow-sm relative overflow-hidden">
+    <div class="absolute top-0 right-0 p-4 opacity-10">
+      <i class="fas fa-robot text-6xl text-indigo-500"></i>
+    </div>
+    <div class="flex items-center gap-3 mb-6 relative z-10">
+      <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30">
+        <i class="fas fa-lightbulb"></i>
+      </div>
+      <div>
+        <h3 class="font-bold text-indigo-900 dark:text-indigo-100 text-lg">Interpretasi Cerdas</h3>
+        <p class="text-xs text-indigo-600 dark:text-indigo-400">Berdasarkan data hari ini</p>
+      </div>
+    </div>
+    
+    <div class="space-y-4 relative z-10">
+      <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-indigo-100 dark:border-indigo-800/50 shadow-sm flex items-start gap-3">
+        <div class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 flex items-center justify-center shrink-0 mt-0.5">
+          <i class="fas fa-check"></i>
+        </div>
+        <div>
+          <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-100">Tingkat Kehadiran Sangat Baik</h4>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Kehadiran mencapai 98%. Pertahankan program motivasi pagi yang telah berjalan dengan baik.</p>
+        </div>
+      </div>
+      
+      <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-amber-100 dark:border-amber-800/50 shadow-sm flex items-start gap-3">
+        <div class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div>
+          <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-100">Perhatian: Tunggakan SPP</h4>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Terdapat 15% siswa yang belum menyelesaikan administrasi bulan ini. Disarankan mengirim pesan pengingat ke orang tua.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  // Fungsi yang dipanggil oleh Index.html saat memuat komponen ini
+  window.initPage = function() {
+    google.script.run
+      .withSuccessHandler(function(stats) {
+        var html = `
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="flex justify-between items-start mb-4 relative z-10">
+              <div>
+                <p class="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-sm font-medium">Total Siswa</p>
+                <h3 class="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-1">${stats.totalSiswa}</h3>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fas fa-users text-xl"></i>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 text-sm relative z-10">
+              <span class="text-indigo-600 font-medium flex items-center gap-1"><i class="fas fa-arrow-up text-xs"></i> 12</span>
+              <span class="text-slate-400 dark:text-slate-500">siswa baru bulan ini</span>
+            </div>
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-50 rounded-full blur-2xl opacity-50"></div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="flex justify-between items-start mb-4 relative z-10">
+              <div>
+                <p class="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-sm font-medium">Total Guru</p>
+                <h3 class="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-1">${stats.totalGuru}</h3>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fas fa-chalkboard-teacher text-xl"></i>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 text-sm relative z-10">
+              <span class="text-slate-400 dark:text-slate-500">Total Tenaga Pendidik aktif</span>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="flex justify-between items-start mb-4 relative z-10">
+              <div>
+                <p class="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-sm font-medium">Total Kelas</p>
+                <h3 class="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-1">${stats.totalKelas}</h3>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fas fa-chalkboard text-xl"></i>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 text-sm relative z-10">
+              <span class="text-slate-400 dark:text-slate-500">3 Rombel per Tingkat</span>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="flex justify-between items-start mb-4 relative z-10">
+              <div>
+                <p class="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-sm font-medium">Siswa Hadir Hari Ini</p>
+                <h3 class="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-1">${stats.hadirHariIni}</h3>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fas fa-check-circle text-xl"></i>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 text-sm relative z-10">
+              <span class="text-indigo-600 font-medium">98%</span>
+              <span class="text-slate-400 dark:text-slate-500">tingkat kehadiran</span>
+            </div>
+          </div>
+        `;
+        document.getElementById('dashboardStats').innerHTML = html;
+      })
+      .withFailureHandler(function(err) {
+        document.getElementById('dashboardStats').innerHTML = '<div class="col-span-4 text-red-500">Gagal memuat data: ' + err.toString() + '</div>';
+      })
+      .getDashboardStats();
+  }
+</script>

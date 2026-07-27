@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SIMS SMP AL-HIKAM</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {}
+        }
+      }
+    </script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- FontAwesome (untuk icon, bisa juga pakai Lucide via script) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+      /* CSS Kustom Dasar */
+      body { background-color: #f8fafc; }
+      .sidebar { transition: transform 0.3s ease-in-out; }
+    </style>
+  </head>
+  <body class="flex h-screen overflow-hidden text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-950 dark:bg-slate-950 transition-colors duration-300">
+    
+    <!-- Sidebar / Navigasi Kiri -->
+    <aside class="w-64 bg-slate-900 text-white flex flex-col h-full sidebar absolute md:relative z-20 transform -translate-x-full md:translate-x-0" id="sidebar">
+      <div class="p-6 border-b border-slate-800 flex items-center justify-between">
+        <h1 class="text-2xl font-bold tracking-wider">SIMS</h1>
+        <button id="closeSidebar" class="md:hidden text-slate-300 hover:text-white">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <div class="flex-1 overflow-y-auto py-4">
+        <!-- Menu Navigasi -->
+        <nav class="space-y-1 px-3" id="nav-menu">
+          <a href="javascript:void(0)" onclick="loadPage('dashboard')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors" data-page="dashboard">
+            <i class="fas fa-home w-5 text-center"></i>
+            <span>Dashboard</span>
+          </a>
+          
+          <div class="pt-4 pb-1">
+            <p class="px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Master Data</p>
+          </div>
+          <a href="javascript:void(0)" onclick="loadPage('master_siswa')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors" data-page="master_siswa">
+            <i class="fas fa-users w-5 text-center"></i>
+            <span>Siswa</span>
+          </a>
+          <a href="javascript:void(0)" onclick="loadPage('master_guru')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors" data-page="master_guru">
+            <i class="fas fa-chalkboard-teacher w-5 text-center"></i>
+            <span>Guru & Tendik</span>
+          </a>
+          <a href="javascript:void(0)" onclick="loadPage('master_kelas')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors" data-page="master_kelas">
+            <i class="fas fa-chalkboard w-5 text-center"></i>
+            <span>Kelas & Rombel</span>
+          </a>
+          <a href="javascript:void(0)" onclick="loadPage('master_mapel')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors" data-page="master_mapel">
+            <i class="fas fa-book w-5 text-center"></i>
+            <span>Mata Pelajaran</span>
+          </a>
+          
+          <div class="pt-4 pb-1">
+            <p class="px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Akademik</p>
+          </div>
+          <a href="javascript:void(0)" onclick="loadPage('absensi_siswa')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors" data-page="absensi_siswa">
+            <i class="fas fa-calendar-check w-5 text-center"></i>
+            <span>Absensi Siswa</span>
+          </a>
+          <a href="javascript:void(0)" onclick="loadPage('absensi_guru')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors" data-page="absensi_guru">
+            <i class="fas fa-user-clock w-5 text-center"></i>
+            <span>Absensi Guru</span>
+          </a>
+          <a href="javascript:void(0)" onclick="loadPage('pelanggaran')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors" data-page="pelanggaran">
+            <i class="fas fa-exclamation-triangle w-5 text-center"></i>
+            <span>Pelanggaran Siswa</span>
+          </a>
+          
+          <div class="pt-4 pb-1">
+            <p class="px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Keuangan</p>
+          </div>
+          <a href="javascript:void(0)" onclick="loadPage('keuangan')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors" data-page="keuangan">
+            <i class="fas fa-wallet w-5 text-center"></i>
+            <span>Pembayaran & SPP</span>
+          </a>
+
+          <div class="pt-4 pb-1">
+            <p class="px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Administrasi</p>
+          </div>
+          <a href="javascript:void(0)" onclick="loadPage('surat')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors" data-page="surat">
+            <i class="fas fa-envelope-open-text w-5 text-center"></i>
+            <span>Surat Menyurat</span>
+          </a>
+          <a href="javascript:void(0)" onclick="loadPage('arsip')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors" data-page="arsip">
+            <i class="fas fa-archive w-5 text-center"></i>
+            <span>Arsip Digital</span>
+          </a>
+
+          <div class="pt-4 pb-1">
+            <p class="px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Sistem</p>
+          </div>
+          <a href="javascript:void(0)" onclick="loadPage('laporan')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors" data-page="laporan">
+            <i class="fas fa-chart-bar w-5 text-center"></i>
+            <span>Laporan</span>
+          </a>
+          <a href="javascript:void(0)" onclick="loadPage('pengaturan')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors" data-page="pengaturan">
+            <i class="fas fa-cog w-5 text-center"></i>
+            <span>Pengaturan</span>
+          </a>
+        </nav>
+      </div>
+      
+      <div class="p-4 border-t border-slate-800">
+        <button onclick="handleLogout()" class="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-slate-400 hover:bg-red-600 hover:text-white transition-colors">
+          <i class="fas fa-sign-out-alt w-5 text-center"></i>
+          <span>Keluar</span>
+        </button>
+      </div>
+    </aside>
+    
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-full w-full bg-slate-50 dark:bg-slate-950 relative">
+      <!-- Topbar -->
+      <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 h-16 flex items-center justify-between px-4 lg:px-8 shrink-0">
+        <div class="flex items-center gap-4">
+          <button id="openSidebar" class="md:hidden text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200">
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+          <div class="font-medium text-slate-700 dark:text-slate-200" id="headerTitle">Dashboard</div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+          <button onclick="toggleTheme()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title="Toggle Theme">
+            <i id="themeIcon" class="fas fa-moon text-xl"></i>
+          </button>
+          <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 flex items-center justify-center font-bold" id="userInitial">
+            A
+          </div>
+        </div>
+      </header>
+      
+      <!-- Container untuk merender halaman HTML -->
+      <div class="flex-1 overflow-y-auto p-4 lg:p-8" id="app-container">
+        <!-- Konten akan dimuat di sini -->
+        <div class="flex items-center justify-center h-full">
+          <i class="fas fa-circle-notch fa-spin text-3xl text-indigo-600"></i>
+        </div>
+      </div>
+    </main>
+
+    <!-- Overlay untuk mobile sidebar -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/50 z-10 hidden md:hidden"></div>
+
+    <script>
+      // State Aplikasi Client Side
+      
+      function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('theme', 'light');
+          document.getElementById('themeIcon').classList.replace('fa-sun', 'fa-moon');
+        } else {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('theme', 'dark');
+          document.getElementById('themeIcon').classList.replace('fa-moon', 'fa-sun');
+        }
+      }
+
+      // Initialize theme
+      if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        document.addEventListener('DOMContentLoaded', () => {
+          const icon = document.getElementById('themeIcon');
+          if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+        });
+      }
+
+      var currentPage = '<?= page ?>';
+      
+      // Inisialisasi
+      document.addEventListener('DOMContentLoaded', function() {
+        setupMobileMenu();
+        checkAuth();
+        loadPage(currentPage);
+      });
+      
+      function checkAuth() {
+        var user = sessionStorage.getItem('user');
+        if(!user) {
+          // Redirect ke login
+          google.script.run.withSuccessHandler(function(url){
+             window.top.location.href = url + '?page=login';
+          }).getAppUrl();
+        } else {
+          var userData = JSON.parse(user);
+          document.getElementById('userInitial').innerText = userData.name.charAt(0).toUpperCase();
+        }
+      }
+
+      function loadPage(pageName) {
+        currentPage = pageName;
+        updateActiveNav(pageName);
+        
+        var container = document.getElementById('app-container');
+        container.innerHTML = '<div class="flex items-center justify-center h-full"><i class="fas fa-circle-notch fa-spin text-3xl text-indigo-600"></i></div>';
+        
+        // Panggil GAS untuk mengambil HTML komponen
+        google.script.run
+                    .withSuccessHandler(function(html) {
+            container.innerHTML = html;
+            
+            // Execute scripts inside the injected HTML
+            var scripts = container.getElementsByTagName('script');
+            for (var i = 0; i < scripts.length; i++) {
+              var script = document.createElement('script');
+              if (scripts[i].src) {
+                script.src = scripts[i].src;
+              } else {
+                script.innerHTML = scripts[i].innerHTML;
+              }
+              document.body.appendChild(script);
+            }
+            
+            // Jika halaman yang diload memiliki fungsi inisialisasi, panggil fungsi tersebut
+            setTimeout(function() {
+              if (typeof initPage === 'function') {
+                initPage();
+              }
+            }, 100);
+          })
+          .withFailureHandler(function(err) {
+            container.innerHTML = '<div class="bg-red-50 text-red-600 p-4 rounded-lg">Gagal memuat halaman: ' + err.toString() + '</div>';
+          })
+          .getComponentHtml(pageName); // Kita perlu buat fungsi ini di Code.gs
+          
+        // Close sidebar on mobile
+        document.getElementById('sidebar').classList.add('-translate-x-full');
+        document.getElementById('sidebarOverlay').classList.add('hidden');
+      }
+      
+      function updateActiveNav(pageName) {
+        var items = document.querySelectorAll('.nav-item');
+        items.forEach(function(item) {
+          if (item.getAttribute('data-page') === pageName) {
+            item.classList.add('bg-indigo-600', 'text-white');
+            item.classList.remove('text-slate-400');
+            
+            // Update Header
+            document.getElementById('headerTitle').innerText = item.querySelector('span').innerText;
+          } else {
+            item.classList.remove('bg-indigo-600', 'text-white');
+            item.classList.add('text-slate-400');
+          }
+        });
+      }
+
+      function handleLogout() {
+        sessionStorage.removeItem('user');
+        google.script.run.withSuccessHandler(function(url){
+           window.top.location.href = url + '?page=login';
+        }).getAppUrl();
+      }
+      
+      function setupMobileMenu() {
+        var openBtn = document.getElementById('openSidebar');
+        var closeBtn = document.getElementById('closeSidebar');
+        var sidebar = document.getElementById('sidebar');
+        var overlay = document.getElementById('sidebarOverlay');
+        
+        openBtn.addEventListener('click', function() {
+          sidebar.classList.remove('-translate-x-full');
+          overlay.classList.remove('hidden');
+        });
+        
+        closeBtn.addEventListener('click', function() {
+          sidebar.classList.add('-translate-x-full');
+          overlay.classList.add('hidden');
+        });
+        
+        overlay.addEventListener('click', function() {
+          sidebar.classList.add('-translate-x-full');
+          overlay.classList.add('hidden');
+        });
+      }
+    </script>
+  </body>
+</html>

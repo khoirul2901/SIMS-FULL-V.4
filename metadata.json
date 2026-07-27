@@ -1,0 +1,6 @@
+{
+  "name": "SIMS SMP AL-HIKAM",
+  "description": "Sistem Informasi Manajemen Sekolah Terpadu untuk SMP AL-HIKAM, mengelola data siswa, guru, kelas, absensi digital, pelanggaran kedisiplinan, keuangan, dan kearsipan.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

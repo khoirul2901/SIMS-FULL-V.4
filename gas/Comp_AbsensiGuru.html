@@ -1,0 +1,257 @@
+
+<div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Absensi Guru</h1>
+      <p class="text-sm text-slate-500 mt-1">Input data kehadiran tenaga pendidik</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="simulateScanQR()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white hover:bg-slate-900 font-medium rounded-lg transition-colors text-sm">
+        <i class="fas fa-qrcode"></i> Scan QR
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm md:col-span-1 h-fit">
+      <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <i class="fas fa-filter text-blue-600"></i> Parameter Absensi
+      </h3>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Tanggal</label>
+          <input type="date" id="tglAbsensi" onchange="loadDataAbsensi()" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Jenis Absensi</label>
+          <select id="jenisAbsensi" onchange="loadDataAbsensi()" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none">
+            <option value="Masuk">Masuk</option>
+            <option value="Pulang">Pulang</option>
+          </select>
+        </div>
+        <div class="pt-4 border-t border-slate-100">
+          <div class="bg-blue-50 rounded-lg p-3">
+            <p class="text-xs text-blue-800 font-medium mb-1" id="ringkasanLabel">Ringkasan Absensi</p>
+            <div class="grid grid-cols-2 gap-2 text-sm mt-2">
+              <div class="flex justify-between"><span class="text-slate-500">Hadir:</span> <span class="font-semibold text-emerald-600" id="countHadir">0</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Izin:</span> <span class="font-semibold text-blue-600" id="countIzin">0</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Sakit:</span> <span class="font-semibold text-amber-600" id="countSakit">0</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Alfa:</span> <span class="font-semibold text-red-600" id="countAlfa">0</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm md:col-span-2 overflow-hidden flex flex-col h-[600px]">
+      <div class="p-4 border-b border-slate-200 bg-slate-50">
+        <div class="relative max-w-sm">
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input type="text" id="searchAbsen" onkeyup="filterAbsensi()" placeholder="Cari nama atau NIP guru..." class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none">
+        </div>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4">
+        <div class="space-y-3" id="listAbsensi">
+          <div class="text-center py-10 text-slate-500">
+            Memuat data...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  var rawDataGuru = [];
+  var rawDataAbsensiHariIni = [];
+  
+  window.initPage = function() {
+    document.getElementById('tglAbsensi').valueAsDate = new Date();
+    loadDataAbsensi();
+  }
+  
+  function loadDataAbsensi() {
+    var tgl = document.getElementById('tglAbsensi').value;
+    var jenis = document.getElementById('jenisAbsensi').value;
+    if(!tgl) return;
+    
+    document.getElementById('listAbsensi').innerHTML = '<div class="text-center py-10 text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i> Memuat data guru...</div>';
+    
+    google.script.run
+      .withSuccessHandler(function(data) {
+        rawDataGuru = data.guru;
+        rawDataAbsensiHariIni = data.absensi;
+        renderAbsensi(rawDataGuru);
+      })
+      .getGuruAndAbsensi(tgl, jenis);
+  }
+  
+  function renderAbsensi(data) {
+    var container = document.getElementById('listAbsensi');
+    if (data.length === 0) {
+      container.innerHTML = '<div class="text-center py-10 text-slate-500">Tidak ada data guru.</div>';
+      updateSummary();
+      return;
+    }
+    
+    var html = '';
+    data.forEach(function(g) {
+      var statusObj = rawDataAbsensiHariIni.find(a => a.nip === g.nip);
+      var currentStatus = statusObj ? statusObj.status : 'Belum diabsen';
+      
+      var colorClass = 'bg-slate-100 text-slate-500 border-slate-200';
+      if(currentStatus === 'Hadir') colorClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      else if(currentStatus === 'Izin') colorClass = 'bg-blue-100 text-blue-700 border-blue-200';
+      else if(currentStatus === 'Sakit') colorClass = 'bg-amber-100 text-amber-700 border-amber-200';
+      else if(currentStatus === 'Alfa') colorClass = 'bg-red-100 text-red-700 border-red-200';
+      else if(currentStatus === 'Terlambat') colorClass = 'bg-orange-100 text-orange-700 border-orange-200';
+      
+      html += `
+        <div class="p-4 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-500 shrink-0">
+              ${g.nama.charAt(0)}
+            </div>
+            <div>
+              <p class="font-semibold text-slate-800">${g.nama}</p>
+              <p class="text-xs text-slate-500 font-mono mt-0.5">${g.nip} • ${g.mapel}</p>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <select 
+              onchange="changeAbsen('${g.nip}', this.value)"
+              class="px-3 py-1.5 rounded-lg text-sm font-medium border appearance-none text-center cursor-pointer min-w-[120px] transition-colors focus:outline-none ${colorClass}"
+            >
+              <option value="Belum diabsen" ${currentStatus==='Belum diabsen'?'selected':''}>Belum diabsen</option>
+              <option value="Hadir" ${currentStatus==='Hadir'?'selected':''}>Hadir</option>
+              <option value="Izin" ${currentStatus==='Izin'?'selected':''}>Izin</option>
+              <option value="Sakit" ${currentStatus==='Sakit'?'selected':''}>Sakit</option>
+              <option value="Alfa" ${currentStatus==='Alfa'?'selected':''}>Alfa</option>
+              <option value="Terlambat" ${currentStatus==='Terlambat'?'selected':''}>Terlambat</option>
+            </select>
+          </div>
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+    updateSummary();
+  }
+  
+  function filterAbsensi() {
+    var search = document.getElementById('searchAbsen').value.toLowerCase();
+    var filtered = rawDataGuru.filter(function(g) {
+      return g.nama.toLowerCase().includes(search) || g.nip.includes(search);
+    });
+    renderAbsensi(filtered);
+  }
+  
+  function changeAbsen(nip, newStatus) {
+    var tgl = document.getElementById('tglAbsensi').value;
+    var jenis = document.getElementById('jenisAbsensi').value;
+    
+    var existingIdx = rawDataAbsensiHariIni.findIndex(a => a.nip === nip);
+    if(existingIdx >= 0) {
+      rawDataAbsensiHariIni[existingIdx].status = newStatus;
+    } else {
+      rawDataAbsensiHariIni.push({ nip: nip, status: newStatus });
+    }
+    
+    filterAbsensi();
+    google.script.run.saveAbsensiGuru(nip, tgl, jenis, newStatus);
+  }
+  
+  function updateSummary() {
+    var hadir = 0, izin = 0, sakit = 0, alfa = 0;
+    rawDataAbsensiHariIni.forEach(a => {
+      if(a.status === 'Hadir' || a.status === 'Terlambat') hadir++;
+      else if(a.status === 'Izin') izin++;
+      else if(a.status === 'Sakit') sakit++;
+      else if(a.status === 'Alfa') alfa++;
+    });
+    document.getElementById('countHadir').innerText = hadir;
+    document.getElementById('countIzin').innerText = izin;
+    document.getElementById('countSakit').innerText = sakit;
+    document.getElementById('countAlfa').innerText = alfa;
+    
+    var jenis = document.getElementById('jenisAbsensi').value;
+    document.getElementById('ringkasanLabel').innerText = `Ringkasan ${jenis}`;
+  }
+  
+  function simulateScanQR() {
+    Swal.fire({
+      title: 'Scan QR Code Absensi',
+      html: `
+        <div class="flex flex-col items-center justify-center p-4">
+          <div id="reader" style="width: 300px; height: 300px;" class="mb-4"></div>
+          <p class="text-sm text-slate-500 mt-2">Arahkan Kamera ke QR Code Guru</p>
+          <div class="mt-4 w-full">
+            <input type="text" id="manual-id" class="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Atau ketik NIP manual di sini">
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Absen Manual',
+      cancelButtonText: 'Tutup',
+      didOpen: () => {
+        if (!window.Html5QrcodeScanner) {
+          const script = document.createElement('script');
+          script.src = "https://unpkg.com/html5-qrcode";
+          script.async = true;
+          script.onload = startScanner;
+          document.body.appendChild(script);
+        } else {
+          startScanner();
+        }
+
+        function startScanner() {
+          const scanner = new window.Html5QrcodeScanner(
+            "reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false
+          );
+          scanner.render(onScanSuccess, onScanFailure);
+          
+          function onScanSuccess(decodedText, decodedResult) {
+            scanner.clear();
+            document.getElementById('manual-id').value = decodedText;
+            Swal.clickConfirm();
+          }
+          function onScanFailure(error) {}
+          
+          Swal.getPopup().scanner = scanner;
+        }
+      },
+      willClose: () => {
+        const scanner = Swal.getPopup().scanner;
+        if (scanner) {
+          scanner.clear().catch(e => console.log(e));
+        }
+      },
+      preConfirm: () => {
+        const manualId = document.getElementById('manual-id').value;
+        if (!manualId) {
+          Swal.showValidationMessage('Masukkan NIP terlebih dahulu');
+          return false;
+        }
+        return manualId;
+      }
+    }).then((result) => {
+      if (result.isConfirmed && result.value) {
+        var nip = result.value;
+        var s = rawDataGuru.find(x => x.nip === nip);
+        if(s) {
+          changeAbsen(nip, 'Hadir');
+          var jenis = document.getElementById('jenisAbsensi').value;
+          Swal.fire({
+            icon: 'success',
+            title: 'Berhasil Absen!',
+            text: `${s.nama} berhasil ditandai Hadir (${jenis}).`,
+            timer: 2000,
+            showConfirmButton: false
+          });
+        } else {
+          Swal.fire('Gagal', 'Guru dengan NIP tersebut tidak ditemukan.', 'error');
+        }
+      }
+    });
+  }
+</script>

@@ -1,0 +1,37 @@
+<div class="space-y-6">
+  <div class="flex flex-col justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Laporan Sistem</h1>
+      <p class="text-sm text-slate-500 mt-1">Unduh laporan akademik, absensi, dan keuangan sekolah</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+      <div class="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-3xl mb-4">
+        <i class="fas fa-user-check"></i>
+      </div>
+      <h3 class="font-bold text-slate-800 text-lg mb-2">Laporan Absensi Siswa</h3>
+      <p class="text-sm text-slate-500 mb-6 flex-1">Rekapitulasi kehadiran siswa per kelas dalam satu bulan atau semester.</p>
+      <button onclick="Swal.fire('Info', 'Laporan Absensi akan di-generate', 'success')" class="w-full px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium rounded-lg transition-colors text-sm">Generate Laporan</button>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+      <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mb-4">
+        <i class="fas fa-money-check-alt"></i>
+      </div>
+      <h3 class="font-bold text-slate-800 text-lg mb-2">Laporan Keuangan</h3>
+      <p class="text-sm text-slate-500 mb-6 flex-1">Buku kas harian dan rekap pembayaran SPP bulanan siswa.</p>
+      <button onclick="Swal.fire('Info', 'Laporan Keuangan akan di-generate', 'success')" class="w-full px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium rounded-lg transition-colors text-sm">Generate Laporan</button>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+      <div class="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-3xl mb-4">
+        <i class="fas fa-clipboard-list"></i>
+      </div>
+      <h3 class="font-bold text-slate-800 text-lg mb-2">Laporan Pelanggaran</h3>
+      <p class="text-sm text-slate-500 mb-6 flex-1">Rekap daftar siswa dengan poin pelanggaran tinggi untuk konseling.</p>
+      <button onclick="Swal.fire('Info', 'Laporan Pelanggaran akan di-generate', 'success')" class="w-full px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium rounded-lg transition-colors text-sm">Generate Laporan</button>
+    </div>
+  </div>
+</div>

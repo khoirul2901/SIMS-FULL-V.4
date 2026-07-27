@@ -1,0 +1,657 @@
+<div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Master Data Guru & Tendik</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Kelola data Guru dan Tenaga Kependidikan SMP Al-Hikam</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 mt-4 sm:mt-0">
+      <button onclick="showImportModal()" class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-medium rounded-lg transition-colors text-sm">
+        <i class="fas fa-file-import text-indigo-600 dark:text-indigo-400"></i> Import
+      </button>
+      <button onclick="exportGuru()" class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-medium rounded-lg transition-colors text-sm">
+        <i class="fas fa-file-export text-indigo-600 dark:text-indigo-400"></i> Export
+      </button>
+      <button onclick="printAllKartu()" class="flex items-center gap-2 px-4 py-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 font-medium rounded-lg transition-colors text-sm">
+        <i class="fas fa-id-card"></i> Print Semua Kartu
+      </button>
+      <button onclick="showModalGuru(false)" class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 font-medium rounded-lg transition-colors shadow-sm shadow-indigo-600/20 text-sm">
+        <i class="fas fa-plus"></i> Tambah Guru
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="relative max-w-md w-full">
+        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
+        <input type="text" id="searchGuru" onkeyup="filterTable()" placeholder="Cari NIP, Nama, atau Mapel..." class="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+      </div>
+      <select id="filterStatusPegawai" onchange="filterTable()" class="px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <option value="">Semua Status Pegawai</option>
+      </select>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm text-slate-600 dark:text-slate-300" id="tableGuru">
+        <thead class="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 uppercase text-xs font-semibold">
+          <tr>
+            <th class="px-6 py-4">NIP / NUPTK</th>
+            <th class="px-6 py-4">Nama Lengkap</th>
+            <th class="px-6 py-4">L/P</th>
+            <th class="px-6 py-4">Jabatan/Tugas</th>
+            <th class="px-6 py-4">Status</th>
+            <th class="px-6 py-4 text-right">Aksi</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-800" id="tableGuruBody">
+          <tr><td colspan="6" class="text-center py-6 text-slate-400 dark:text-slate-500">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal Detail Guru -->
+  <div id="modalDetail" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-800 transform scale-95 opacity-0 transition-all duration-300 flex flex-col max-h-[90vh]" id="modalDetailContent">
+      <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+        <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100">Detail Guru & Tendik</h3>
+        <button onclick="hideModalDetail()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto space-y-6" id="detailGuruBody">
+        <!-- Content injected via JS -->
+      </div>
+      <div class="p-6 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3 shrink-0">
+        <button onclick="hideModalDetail()" class="px-4 py-2 text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 font-medium rounded-lg transition-colors">Tutup</button>
+        <button id="btnEditFromDetail" class="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 font-medium rounded-lg transition-colors">Edit Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Tambah/Edit Guru Lengkap -->
+  <div id="modalGuru" class="fixed inset-0 bg-slate-900/50 z-[60] hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden border border-slate-200 dark:border-slate-800 transform scale-95 opacity-0 transition-all duration-300 flex flex-col max-h-[90vh]" id="modalGuruContent">
+      <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+        <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100" id="modalGuruTitle">Tambah Guru & Tendik Baru</h3>
+        <button onclick="hideModalGuru()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1">
+        <form id="formGuru" onsubmit="handleSaveGuru(event)" class="space-y-8">
+          <!-- Seksi Identitas -->
+          <div>
+            <h4 class="text-sm font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">Identitas Guru & Tendik</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">NIP / NUPTK</label>
+                <input type="text" id="guruNip" required class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Lengkap & Gelar</label>
+                <input type="text" id="guruNama" required onkeyup="generateUsername(this.value)" class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tempat Lahir</label>
+                <input type="text" id="guruTempatLahir" class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tanggal Lahir</label>
+                <input type="date" id="guruTanggalLahir" class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" style="color-scheme: dark;">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Jenis Kelamin</label>
+                <select id="guruJk" required class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                  <option value="L">Laki-laki (L)</option>
+                  <option value="P">Perempuan (P)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">No. HP / WhatsApp</label>
+                <input type="text" id="guruNoHp" class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Alamat Lengkap</label>
+                <textarea id="guruAlamat" rows="2" class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Seksi Kepegawaian -->
+          <div>
+            <h4 class="text-sm font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">Biodata Kepegawaian</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status Pegawai</label>
+                <select id="guruStatusPegawai" required class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                  <option value="GTY">Guru Tetap Yayasan (GTY)</option>
+                  <option value="GTT">Guru Tidak Tetap (GTT)</option>
+                  <option value="PTY">Pegawai Tetap Yayasan (PTY)</option>
+                  <option value="PTT">Pegawai Tidak Tetap (PTT)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Jabatan / Tugas</label>
+                <input type="text" id="guruJabatan" class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mata Pelajaran <span class="text-xs text-slate-400 font-normal">(Opsional)</span></label>
+                <input type="text" id="guruMapel" class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status Keaktifan</label>
+                <select id="guruStatus" required class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                  <option value="Aktif">Aktif</option>
+                  <option value="Cuti">Cuti</option>
+                  <option value="Pensiun">Pensiun</option>
+                  <option value="Keluar">Keluar</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Pendidikan Terakhir</label>
+                <select id="guruPendidikan" class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                  <option value="">Pilih Pendidikan</option>
+                  <option value="SMA/SMK">SMA/SMK</option>
+                  <option value="D3">D3</option>
+                  <option value="S1">S1</option>
+                  <option value="S2">S2</option>
+                  <option value="S3">S3</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Jurusan</label>
+                <input type="text" id="guruJurusan" class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tahun Lulus</label>
+                <input type="text" id="guruTahunLulus" class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+            </div>
+          </div>
+
+          <!-- Seksi Akun Sistem -->
+          <div>
+            <h4 class="text-sm font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">Akun Akses Sistem</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username <span class="text-xs text-slate-400 font-normal">(Otomatis dari nama)</span></label>
+                <input type="text" id="guruUsername" required class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
+                <input type="text" id="guruPassword" required value="123456" class="w-full px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="p-6 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3 shrink-0 bg-slate-50 dark:bg-slate-900">
+        <button type="button" onclick="hideModalGuru()" class="px-4 py-2 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium rounded-lg transition-colors">Batal</button>
+        <button type="submit" form="formGuru" id="btnSaveGuru" class="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 font-medium rounded-lg transition-colors">Simpan Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Area Print Tersembunyi -->
+  <div id="printArea" class="hidden"></div>
+</div>
+
+<style>
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printArea, #printArea * {
+    visibility: visible;
+  }
+  #printArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    display: block !important;
+  }
+  .print-page-break {
+    page-break-after: always;
+  }
+  .kartu-container {
+    width: 8.5cm;
+    height: 5.4cm;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 0;
+    box-sizing: border-box;
+    display: inline-block;
+    margin: 10px;
+    font-family: sans-serif;
+    position: relative;
+    background: #ffffff;
+    background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+    background-size: 10px 10px;
+    color: #0f172a;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+  .kartu-header {
+    text-align: center;
+    background: linear-gradient(to right, #0ea5e9, #2563eb);
+    padding: 10px 5px;
+    color: #ffffff;
+    border-bottom: 3px solid #f59e0b;
+  }
+  .kartu-header h2 { margin: 0; font-size: 14px; font-weight: bold; letter-spacing: 1px; }
+  .kartu-header h3 { margin: 0; font-size: 9px; font-weight: normal; opacity: 0.9; margin-top: 2px; }
+  .kartu-body { font-size: 10px; line-height: 1.4; display: flex; padding: 12px; }
+  .kartu-photo { 
+    width: 55px; height: 75px; 
+    border: 2px solid #e2e8f0; 
+    border-radius: 6px;
+    margin-right: 12px; 
+    text-align: center; 
+    line-height: 75px; 
+    font-size: 8px; 
+    color: #94a3b8;
+    background: #f8fafc;
+  }
+  .kartu-info { flex: 1; }
+  .kartu-info table { width: 100%; border-collapse: collapse; }
+  .kartu-info td { vertical-align: top; padding-bottom: 4px; }
+  .kartu-info td:first-child { width: 55px; font-weight: bold; color: #475569; }
+  .kartu-qr { margin-left: 8px; display: flex; align-items: flex-end; justify-content: flex-end; }
+}
+</style>
+
+<script>
+  let rawDataGuru = [];
+  let isEditMode = false;
+
+  function initPage() {
+    google.script.run
+      .withSuccessHandler(function(data) {
+        rawDataGuru = data;
+        renderTable(data);
+        populateFilterStatus(data);
+      })
+      .withFailureHandler(function(err) {
+         document.getElementById('tableGuruBody').innerHTML = '<tr><td colspan="6" class="text-center py-6 text-red-500">Gagal memuat: ' + err.toString() + '</td></tr>';
+      })
+      .getGuruList();
+  }
+
+  function populateFilterStatus(data) {
+    var uniqueStatus = [...new Set(data.map(item => item.statusPegawai))].sort();
+    var filterSel = document.getElementById('filterStatusPegawai');
+    var options = '<option value="">Semua Status Pegawai</option>';
+    uniqueStatus.forEach(function(s) {
+      if(s) options += `<option value="${s}">${s}</option>`;
+    });
+    filterSel.innerHTML = options;
+  }
+
+  function renderTable(data) {
+    var tbody = document.getElementById('tableGuruBody');
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-slate-400 dark:text-slate-500">Tidak ada data guru.</td></tr>';
+      return;
+    }
+    
+    var html = '';
+    data.forEach(function(g) {
+      let gJson = encodeURIComponent(JSON.stringify(g));
+      html += `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-200 dark:border-slate-800 last:border-0 transition-colors">
+        <td class="px-6 py-4 font-mono text-slate-800 dark:text-slate-100">${g.nip || '-'}</td>
+        <td class="px-6 py-4">
+          <button onclick="viewDetailGuru('${gJson}')" class="font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-left transition-colors">${g.nama}</button>
+        </td>
+        <td class="px-6 py-4 text-slate-700 dark:text-slate-300">${g.jk || '-'}</td>
+        <td class="px-6 py-4">
+          <div class="text-slate-800 dark:text-slate-100">${g.jabatan || g.mapel || '-'}</div>
+          <div class="text-xs text-slate-500">${g.statusPegawai || '-'}</div>
+        </td>
+        <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${g.status==='Aktif'?'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400':'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}">${g.status || 'Aktif'}</span></td>
+        <td class="px-6 py-4 text-right whitespace-nowrap">
+          <button onclick="printKartuIndividu('${gJson}')" class="text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 p-2 rounded transition-colors" title="Cetak Kartu"><i class="fas fa-id-badge"></i></button>
+          <button onclick="editGuru('${gJson}')" class="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 p-2 rounded transition-colors" title="Edit"><i class="fas fa-edit"></i></button>
+          <button onclick="deleteGuruRow('${g.nip}', '${g.nama}')" class="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 p-2 rounded transition-colors" title="Hapus"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`;
+    });
+    tbody.innerHTML = html;
+  }
+
+  function filterTable() {
+    var search = document.getElementById('searchGuru').value.toLowerCase();
+    var filterStatus = document.getElementById('filterStatusPegawai').value;
+    
+    var filtered = rawDataGuru.filter(function(g) {
+      var matchSearch = g.nama.toLowerCase().includes(search) || (g.nip && g.nip.includes(search)) || (g.mapel && g.mapel.toLowerCase().includes(search));
+      var matchStatus = filterStatus ? g.statusPegawai === filterStatus : true;
+      return matchSearch && matchStatus;
+    });
+    
+    renderTable(filtered);
+  }
+
+  function generateUsername(nama) {
+    if(!isEditMode) {
+      let un = nama.split(',')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+      document.getElementById('guruUsername').value = un;
+    }
+  }
+
+  function showModalGuru(guru) {
+    var modal = document.getElementById('modalGuru');
+    var content = document.getElementById('modalGuruContent');
+    
+    if (guru) {
+      isEditMode = true;
+      document.getElementById('modalGuruTitle').innerText = 'Edit Data Guru & Tendik';
+      document.getElementById('guruNip').value = guru.nip || '';
+      document.getElementById('guruNip').readOnly = true;
+      document.getElementById('guruNama').value = guru.nama || '';
+      document.getElementById('guruTempatLahir').value = guru.tempatLahir || '';
+      document.getElementById('guruTanggalLahir').value = guru.tanggalLahir || '';
+      document.getElementById('guruJk').value = guru.jk || 'L';
+      document.getElementById('guruAlamat').value = guru.alamat || '';
+      document.getElementById('guruStatusPegawai').value = guru.statusPegawai || 'GTY';
+      document.getElementById('guruJabatan').value = guru.jabatan || '';
+      document.getElementById('guruMapel').value = guru.mapel || '';
+      document.getElementById('guruStatus').value = guru.status || 'Aktif';
+      document.getElementById('guruPendidikan').value = guru.pendidikan || '';
+      document.getElementById('guruJurusan').value = guru.jurusan || '';
+      document.getElementById('guruTahunLulus').value = guru.tahunLulus || '';
+      document.getElementById('guruNoHp').value = guru.noHp || '';
+      document.getElementById('guruUsername').value = guru.username || '';
+      document.getElementById('guruPassword').value = guru.password || '123456';
+    } else {
+      isEditMode = false;
+      document.getElementById('modalGuruTitle').innerText = 'Tambah Guru & Tendik Baru';
+      document.getElementById('formGuru').reset();
+      document.getElementById('guruNip').readOnly = false;
+      document.getElementById('guruPassword').value = '123456';
+    }
+    
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+  }
+
+  function hideModalGuru() {
+    var modal = document.getElementById('modalGuru');
+    var content = document.getElementById('modalGuruContent');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => { modal.classList.add('hidden'); }, 300);
+  }
+
+  function viewDetailGuru(dataStr) {
+    var g = JSON.parse(decodeURIComponent(dataStr));
+    var modal = document.getElementById('modalDetail');
+    var content = document.getElementById('modalDetailContent');
+    
+    var html = `
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          <h4 class="text-sm font-bold text-indigo-600 dark:text-indigo-400 uppercase mb-4">Identitas Guru</h4>
+          <table class="w-full text-sm text-slate-700 dark:text-slate-300">
+            <tbody>
+              <tr><td class="py-2 text-slate-500 w-1/3">NIP / NUPTK</td><td class="py-2 font-medium">${g.nip || '-'}</td></tr>
+              <tr><td class="py-2 text-slate-500">Nama Lengkap</td><td class="py-2 font-medium">${g.nama}</td></tr>
+              <tr><td class="py-2 text-slate-500">Tempat, Tgl Lahir</td><td class="py-2">${g.tempatLahir || '-'}, ${g.tanggalLahir || '-'}</td></tr>
+              <tr><td class="py-2 text-slate-500">Jenis Kelamin</td><td class="py-2">${g.jk === 'L' ? 'Laki-laki' : 'Perempuan'}</td></tr>
+              <tr><td class="py-2 text-slate-500">Alamat</td><td class="py-2">${g.alamat || '-'}</td></tr>
+              <tr><td class="py-2 text-slate-500">No. HP</td><td class="py-2">${g.noHp || '-'}</td></tr>
+              <tr><td class="py-2 text-slate-500">Status Keaktifan</td><td class="py-2"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 text-xs">${g.status || 'Aktif'}</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-indigo-600 dark:text-indigo-400 uppercase mb-4">Kepegawaian & Akun</h4>
+          <table class="w-full text-sm text-slate-700 dark:text-slate-300">
+            <tbody>
+              <tr><td class="py-2 text-slate-500 w-1/3">Status Pegawai</td><td class="py-2 font-medium">${g.statusPegawai || '-'}</td></tr>
+              <tr><td class="py-2 text-slate-500">Jabatan/Tugas</td><td class="py-2">${g.jabatan || '-'}</td></tr>
+              <tr><td class="py-2 text-slate-500">Mata Pelajaran</td><td class="py-2">${g.mapel || '-'}</td></tr>
+              <tr><td class="py-2 text-slate-500">Pend. Terakhir</td><td class="py-2">${g.pendidikan || '-'}</td></tr>
+              <tr><td class="py-2 text-slate-500">Jurusan</td><td class="py-2">${g.jurusan || '-'}</td></tr>
+              <tr><td class="py-2 text-slate-500">Tahun Lulus</td><td class="py-2">${g.tahunLulus || '-'}</td></tr>
+              <tr><td colspan="2"><hr class="my-2 border-slate-200 dark:border-slate-700"></td></tr>
+              <tr><td class="py-2 text-slate-500">Username</td><td class="py-2 font-mono bg-slate-100 dark:bg-slate-800 px-2 rounded">${g.username || '-'}</td></tr>
+              <tr><td class="py-2 text-slate-500">Password</td><td class="py-2 font-mono bg-slate-100 dark:bg-slate-800 px-2 rounded">${g.password || '-'}</td></tr>
+            </tbody>
+          </table>
+          
+          <div class="mt-6 p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center gap-4">
+            <img src="https://quickchart.io/qr?text=${g.nip || g.id}&size=100&margin=1" alt="QR" class="w-16 h-16 bg-white border border-slate-200 rounded p-1" />
+            <div>
+              <p class="text-sm font-bold text-slate-700 dark:text-slate-200">QR Code Identitas</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Dapat digunakan untuk scan kehadiran atau id</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('detailGuruBody').innerHTML = html;
+    
+    document.getElementById('btnEditFromDetail').onclick = function() {
+      hideModalDetail();
+      setTimeout(() => { editGuru(dataStr); }, 300);
+    };
+    
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+  }
+
+  function hideModalDetail() {
+    var modal = document.getElementById('modalDetail');
+    var content = document.getElementById('modalDetailContent');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => { modal.classList.add('hidden'); }, 300);
+  }
+
+  function editGuru(dataStr) {
+    var data = JSON.parse(decodeURIComponent(dataStr));
+    showModalGuru(data);
+  }
+
+  function handleSaveGuru(e) {
+    e.preventDefault();
+    var btn = document.getElementById('btnSaveGuru');
+    var originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+    btn.disabled = true;
+    
+    var data = {
+      nip: document.getElementById('guruNip').value,
+      nama: document.getElementById('guruNama').value,
+      jk: document.getElementById('guruJk').value,
+      tempatLahir: document.getElementById('guruTempatLahir').value,
+      tanggalLahir: document.getElementById('guruTanggalLahir').value,
+      alamat: document.getElementById('guruAlamat').value,
+      statusPegawai: document.getElementById('guruStatusPegawai').value,
+      jabatan: document.getElementById('guruJabatan').value,
+      mapel: document.getElementById('guruMapel').value,
+      status: document.getElementById('guruStatus').value,
+      pendidikan: document.getElementById('guruPendidikan').value,
+      jurusan: document.getElementById('guruJurusan').value,
+      tahunLulus: document.getElementById('guruTahunLulus').value,
+      noHp: document.getElementById('guruNoHp').value,
+      username: document.getElementById('guruUsername').value,
+      password: document.getElementById('guruPassword').value
+    };
+    
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        if (res.success) {
+          Swal.fire({ icon: 'success', title: 'Berhasil!', text: res.message, timer: 1500, showConfirmButton: false });
+          hideModalGuru();
+          initPage();
+        } else {
+          Swal.fire('Gagal', res.message || 'Terjadi kesalahan', 'error');
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        Swal.fire('Error', err.toString(), 'error');
+      })
+      .saveGuru(data);
+  }
+
+  function deleteGuruRow(nip, nama) {
+    Swal.fire({
+      title: 'Hapus Guru?',
+      text: `Anda yakin ingin menghapus data ${nama}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Ya, Hapus!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if(res.success) {
+              Swal.fire('Terhapus!', res.message, 'success');
+              initPage();
+            } else {
+              Swal.fire('Gagal', res.message, 'error');
+            }
+          })
+          .withFailureHandler(function(err){ Swal.fire('Error', err.toString(), 'error'); })
+          .deleteGuru(nip);
+      }
+    });
+  }
+
+  function getHtmlKartu(g) {
+    return `
+      <div class="kartu-container">
+        <div class="kartu-header">
+          <h2>KARTU PEGAWAI</h2>
+          <h3>SMP AL-HIKAM</h3>
+        </div>
+        <div class="kartu-body">
+          <div class="kartu-photo">Foto<br>3x4</div>
+          <div class="kartu-info">
+            <table>
+              <tr><td>NIP/NUPTK</td><td>: ${g.nip || '-'}</td></tr>
+              <tr><td>Nama</td><td>: <b>${g.nama}</b></td></tr>
+              <tr><td>TTL</td><td>: ${g.tempatLahir || '-'}, ${g.tanggalLahir || '-'}</td></tr>
+              <tr><td>Jabatan</td><td>: ${g.jabatan || g.mapel || '-'}</td></tr>
+              <tr><td>Status</td><td>: ${g.statusPegawai || '-'}</td></tr>
+            </table>
+          </div>
+          <div class="kartu-qr">
+            <img src="https://quickchart.io/qr?text=${g.nip || g.id}&size=60&margin=1" alt="QR" style="width: 50px; height: 50px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 2px; background: white;" />
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function printKartuIndividu(dataStr) {
+    var g = JSON.parse(decodeURIComponent(dataStr));
+    var html = getHtmlKartu(g);
+    var printArea = document.getElementById('printArea');
+    printArea.innerHTML = html;
+    window.print();
+    printArea.innerHTML = '';
+  }
+
+  function printAllKartu() {
+    var filterStatus = document.getElementById('filterStatusPegawai').value;
+    var filtered = rawDataGuru;
+    if(filterStatus) {
+      filtered = rawDataGuru.filter(g => g.statusPegawai === filterStatus);
+    }
+    
+    if(filtered.length === 0) {
+      Swal.fire('Info', 'Tidak ada data guru untuk dicetak', 'info');
+      return;
+    }
+
+    var html = '';
+    filtered.forEach((g) => {
+      html += getHtmlKartu(g);
+    });
+    
+    var printArea = document.getElementById('printArea');
+    printArea.innerHTML = html;
+    window.print();
+    printArea.innerHTML = '';
+  }
+
+  function exportGuru() {
+    Swal.fire({
+      title: 'Export Data Guru?',
+      text: "Data akan diexport sebagai file CSV/Excel",
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonColor: '#4f46e5',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Ya, Export!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Assume getExportUrl works for Guru too, if passing param 'Master_Guru'
+        google.script.run
+          .withSuccessHandler(function(url) {
+             window.open(url, '_blank');
+          })
+          .getExportUrl('Master_Guru');
+      }
+    });
+  }
+
+  function showImportModal() {
+     Swal.fire({
+      title: 'Import Data Guru',
+      html: `
+        <div class="mb-4 text-sm text-slate-600 dark:text-slate-400 text-left">
+          Pastikan format file CSV sesuai urutan kolom:<br/>
+          <b>NIP, Nama Lengkap, L/P, Mapel, Status Aktif, Tempat Lahir, Tgl Lahir, Alamat, Status Pegawai, Jabatan, Pendidikan, Jurusan, Tahun Lulus, No HP, Username, Password</b>
+        </div>
+        <input type="file" id="fileImport" accept=".csv" class="w-full text-sm text-slate-500 dark:text-slate-400
+          file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold
+          file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900/30 dark:file:text-indigo-300"/>
+      `,
+      showCancelButton: true,
+      confirmButtonColor: '#4f46e5',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Import',
+      preConfirm: () => {
+        const fileInput = document.getElementById('fileImport');
+        if (!fileInput.files.length) Swal.showValidationMessage('Pilih file terlebih dahulu');
+        return fileInput.files[0];
+      }
+    }).then((result) => {
+      if (result.isConfirmed && result.value) {
+        var file = result.value;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var data = e.target.result.split(',')[1];
+          Swal.fire({ title: 'Memproses...', text: 'Sedang mengimport', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+          google.script.run
+            .withSuccessHandler(function(res) {
+              if (res.success) { Swal.fire('Berhasil!', res.message, 'success'); initPage(); } 
+              else { Swal.fire('Gagal', res.message, 'error'); }
+            })
+            .withFailureHandler(function(err) { Swal.fire('Error', err.toString(), 'error'); })
+            .importGuruCsv(data, file.name); // Need to create importGuruCsv in GAS if used
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+</script>

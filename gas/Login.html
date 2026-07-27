@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SIMS SMP AL-HIKAM - Login</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {}
+        }
+      }
+    </script>
+    <script>
+      if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+  <body class="bg-slate-50 dark:bg-slate-950 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+      <!-- Header -->
+      <div class="bg-indigo-600 dark:bg-indigo-700 p-8 text-center text-white">
+        <h1 class="text-3xl font-bold mb-2">SIMS</h1>
+        <p class="text-indigo-100 text-sm">SMP AL-HIKAM</p>
+      </div>
+      
+      <!-- Form -->
+      <div class="p-8">
+        <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-6 text-center">Silakan Login</h2>
+        
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username / NIP</label>
+              <input type="text" id="username" required 
+                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-all">
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
+              <input type="password" id="password" required 
+                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-all">
+            </div>
+            
+            <button type="submit" id="btnSubmit" 
+              class="w-full bg-indigo-600 hover:bg-indigo-600 dark:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition-colors mt-6 flex justify-center items-center">
+              Login
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      function handleLogin(e) {
+        e.preventDefault();
+        
+        var username = document.getElementById('username').value;
+        var password = document.getElementById('password').value;
+        var btn = document.getElementById('btnSubmit');
+        
+        // Loading state
+        btn.innerHTML = 'Memeriksa...';
+        btn.disabled = true;
+        btn.classList.add('opacity-70');
+        
+        // Panggil fungsi GAS
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if (res.success) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Login Berhasil',
+                text: 'Selamat datang, ' + res.user.name,
+                timer: 1500,
+                showConfirmButton: false
+              }).then(() => {
+                // Simpan user info ke sessionStorage jika perlu
+                sessionStorage.setItem('user', JSON.stringify(res.user));
+                
+                // Redirect ke Dashboard via doGet
+                google.script.run.withSuccessHandler(function(url){
+                  window.top.location.href = url + '?page=dashboard';
+                }).getAppUrl();
+              });
+            } else {
+              Swal.fire('Login Gagal', res.message, 'error');
+              resetBtn(btn);
+            }
+          })
+          .withFailureHandler(function(err) {
+            Swal.fire('Error', 'Terjadi kesalahan sistem', 'error');
+            resetBtn(btn);
+          })
+          .loginUser(username, password);
+      }
+      
+      function resetBtn(btn) {
+        btn.innerHTML = 'Login';
+        btn.disabled = false;
+        btn.classList.remove('opacity-70');
+      }
+    </script>
+  </body>
+</html>

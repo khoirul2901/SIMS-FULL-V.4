@@ -1,0 +1,71 @@
+<div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Arsip Digital</h1>
+      <p class="text-sm text-slate-500 mt-1">Simpan dan kelola dokumen penting sekolah secara digital</p>
+    </div>
+    <button onclick="Swal.fire('Fitur Upload', 'Integrasi dengan Google Drive / Form sedang dikembangkan', 'info')" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 font-medium rounded-lg transition-colors shadow-sm shadow-blue-600/20 text-sm">
+      <i class="fas fa-cloud-upload-alt"></i> Upload Dokumen
+    </button>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[600px]">
+    <div class="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="relative max-w-md w-full">
+        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <input type="text" placeholder="Cari nama dokumen..." class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="flex gap-2">
+        <select class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none">
+          <option value="">Semua Kategori</option>
+          <option value="Akreditasi">Akreditasi</option>
+          <option value="Kurikulum">Kurikulum</option>
+          <option value="SK Kepala Sekolah">SK Kepala Sekolah</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="flex-1 overflow-y-auto p-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="gridArsip">
+        <div class="col-span-full text-center py-10 text-slate-500">Memuat arsip dokumen...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function initPage() {
+    google.script.run
+      .withSuccessHandler(function(data) {
+        var grid = document.getElementById('gridArsip');
+        
+        if (data.length === 0) {
+          grid.innerHTML = '<div class="col-span-full text-center py-10 text-slate-500">Belum ada dokumen yang diunggah.</div>';
+          return;
+        }
+        
+        var html = '';
+        data.forEach(function(a) {
+          html += `
+            <div class="bg-white border border-slate-200 rounded-xl p-4 hover:shadow-md transition-shadow group flex flex-col cursor-pointer">
+              <div class="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+                <i class="fas fa-file-pdf text-xl"></i>
+              </div>
+              <h3 class="font-medium text-slate-800 text-sm line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">${a.nama}</h3>
+              <p class="text-xs text-slate-500 mb-4">${a.kategori}</p>
+              
+              <div class="mt-auto flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-100">
+                <span>${a.tanggal}</span>
+                <span>${a.ukuran}</span>
+              </div>
+            </div>
+          `;
+        });
+        grid.innerHTML = html;
+      })
+      .withFailureHandler(function(err) {
+         document.getElementById('gridArsip').innerHTML = '<div class="col-span-full text-center py-10 text-red-500">Gagal memuat: ' + err.toString() + '</div>';
+      })
+      .getArsipList();
+  }
+</script>
