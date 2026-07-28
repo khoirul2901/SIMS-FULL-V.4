@@ -12,7 +12,7 @@ export const INITIAL_KELAS_DATA = [
 ];
 
 export const MasterKelas = () => {
-  const { kelasData: data, setKelasData: setData } = useDatabase();
+  const { kelasData: data, setKelasData: setData, guruData } = useDatabase();
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredData = data.filter(kelas => 
@@ -188,13 +188,23 @@ export const MasterKelas = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Wali Kelas</label>
-                <input 
-                  type="text" 
+                <select 
                   required 
                   value={formData.waliKelas} 
                   onChange={e => setFormData({...formData, waliKelas: e.target.value})}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                />
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-slate-800"
+                >
+                  <option value="">-- Pilih Wali Kelas --</option>
+                  {guruData && guruData.map((guru: any) => (
+                    <option key={guru.id || guru.nip || guru.nama} value={guru.nama}>
+                      {guru.nama} {guru.nip ? `(NIP: ${guru.nip})` : ''}
+                    </option>
+                  ))}
+                  {/* Fallback if existing waliKelas value is not in guruData */}
+                  {formData.waliKelas && guruData && !guruData.some((g: any) => g.nama === formData.waliKelas) && (
+                    <option value={formData.waliKelas}>{formData.waliKelas}</option>
+                  )}
+                </select>
               </div>
               <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 font-medium rounded-lg transition-colors">Batal</button>
