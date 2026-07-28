@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useDatabase } from '../context/DatabaseContext';
+import { useDatabase, INITIAL_TIME_SLOTS_DATA } from '../context/DatabaseContext';
 import { useAuth } from '../context/AuthContext';
 import { 
   Calendar, 
@@ -20,21 +20,12 @@ import {
   Layers,
   Sparkles,
   Download,
-  Check
+  Check,
+  RotateCcw,
+  Sliders
 } from 'lucide-react';
 
 const HARI_LIST = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-
-const TIME_SLOTS = [
-  { jamKe: 1, mulai: '07:00', selesai: '07:40' },
-  { jamKe: 2, mulai: '07:40', selesai: '08:20' },
-  { jamKe: 3, mulai: '08:20', selesai: '09:00' },
-  { jamKe: 4, mulai: '09:00', selesai: '09:40' },
-  { jamKe: 5, mulai: '10:00', selesai: '10:40' },
-  { jamKe: 6, mulai: '10:40', selesai: '11:20' },
-  { jamKe: 7, mulai: '11:20', selesai: '12:00' },
-  { jamKe: 8, mulai: '12:30', selesai: '13:10' },
-];
 
 const MAPEL_COLORS: Record<string, string> = {
   'Matematika': 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
@@ -64,12 +55,26 @@ interface JadwalFormState {
 
 export const JadwalPelajaran: React.FC = () => {
   const { user } = useAuth();
-  const { jadwalData, setJadwalData, mapelData, guruData, kelasData } = useDatabase();
+  const { 
+    jadwalData, 
+    setJadwalData, 
+    mapelData, 
+    guruData, 
+    kelasData, 
+    timeSlotsData, 
+    setTimeSlotsData 
+  } = useDatabase();
 
   const isAdminOrKurikulum = ['Admin', 'Kepala Sekolah'].includes(user?.role || '');
 
-  // View modes: 'grid-kelas' | 'grid-guru' | 'tabel' | 'deteksi-bentrok'
-  const [viewMode, setViewMode] = useState<'grid-kelas' | 'grid-guru' | 'tabel' | 'deteksi-bentrok'>('grid-kelas');
+  // Sorted Time Slots from DatabaseContext
+  const timeSlots = useMemo(() => {
+    const list = timeSlotsData && timeSlotsData.length > 0 ? timeSlotsData : INITIAL_TIME_SLOTS_DATA;
+    return [...list].sort((a, b) => Number(a.jamKe) - Number(b.jamKe));
+  }, [timeSlotsData]);
+
+  // View modes: 'grid-kelas' | 'grid-guru' | 'tabel' | 'pengaturan-jam' | 'deteksi-bentrok'
+  const [viewMode, setViewMode] = useState<'grid-kelas' | 'grid-guru' | 'tabel' | 'pengaturan-jam' | 'deteksi-bentrok'>('grid-kelas');
   
   // Filters
   const [selectedKelas, setSelectedKelas] = useState<string>(kelasData[0]?.namaKelas || 'VII-A');
@@ -77,7 +82,7 @@ export const JadwalPelajaran: React.FC = () => {
   const [selectedHari, setSelectedHari] = useState<string>('Semua');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
-  // Modals
+  // Modals for Schedule
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJadwal, setEditingJadwal] = useState<JadwalFormState | null>(null);
   const [formData, setFormData] = useState<JadwalFormState>({
@@ -97,9 +102,75 @@ export const JadwalPelajaran: React.FC = () => {
   const [copyTargetKelas, setCopyTargetKelas] = useState('');
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
 
+  // Modals for Time Slot Settings
+  const [isTimeSlotModalOpen, setIsTimeSlotModalOpen] = useState(false);
+  const [editingTimeSlot, setEditingTimeSlot] = useState<any | null>(null);
+  const [timeSlotForm, setTimeSlotForm] = useState({
+    id: '',
+    jamKe: 1,
+    mulai: '07:00',
+    selesai: '07:40',
+    label: 'Jam Ke-1'
+  });
+
+  // Time slot handlers
+  const handleOpenTimeSlotModal = (slot?: any) => {
+    if (slot) {
+      setEditingTimeSlot(slot);
+      setTimeSlotForm({
+        id: slot.id || `TS_${slot.jamKe}`,
+        jamKe: Number(slot.jamKe),
+        mulai: slot.mulai || '07:00',
+        selesai: slot.selesai || '07:40',
+        label: slot.label || `Jam Ke-${slot.jamKe}`
+      });
+    } else {
+      setEditingTimeSlot(null);
+      const maxJam = timeSlots.length > 0 ? Math.max(...timeSlots.map(s => Number(s.jamKe))) + 1 : 1;
+      setTimeSlotForm({
+        id: '',
+        jamKe: maxJam,
+        mulai: '07:00',
+        selesai: '07:40',
+        label: `Jam Ke-${maxJam}`
+      });
+    }
+    setIsTimeSlotModalOpen(true);
+  };
+
+  const handleSaveTimeSlot = (e: React.FormEvent) => {
+    e.preventDefault();
+    const currentList = timeSlotsData && timeSlotsData.length > 0 ? timeSlotsData : INITIAL_TIME_SLOTS_DATA;
+    if (editingTimeSlot) {
+      const updated = currentList.map(s => (s.id === editingTimeSlot.id || s.jamKe === editingTimeSlot.jamKe) ? { ...timeSlotForm, id: editingTimeSlot.id || `TS_${timeSlotForm.jamKe}` } : s);
+      setTimeSlotsData(updated);
+    } else {
+      const newSlot = {
+        ...timeSlotForm,
+        id: `TS_${Date.now()}`
+      };
+      setTimeSlotsData([...currentList, newSlot]);
+    }
+    setIsTimeSlotModalOpen(false);
+    setEditingTimeSlot(null);
+  };
+
+  const handleDeleteTimeSlot = (id: string) => {
+    if (confirm('Apakah Anda yakin ingin menghapus pengaturan jam pelajaran ini?')) {
+      const currentList = timeSlotsData && timeSlotsData.length > 0 ? timeSlotsData : INITIAL_TIME_SLOTS_DATA;
+      setTimeSlotsData(currentList.filter(s => s.id !== id));
+    }
+  };
+
+  const handleResetTimeSlots = () => {
+    if (confirm('Apakah Anda yakin ingin mengembalikan jam pelajaran ke waktu standar (8 Jam Pelajaran)?')) {
+      setTimeSlotsData(INITIAL_TIME_SLOTS_DATA);
+    }
+  };
+
   // Auto set waktu when jamKe changes
   const handleJamKeChange = (jamKe: number) => {
-    const slot = TIME_SLOTS.find(s => s.jamKe === Number(jamKe));
+    const slot = timeSlots.find(s => Number(s.jamKe) === Number(jamKe));
     if (slot) {
       setFormData(prev => ({
         ...prev,
@@ -335,6 +406,14 @@ export const JadwalPelajaran: React.FC = () => {
           {isAdminOrKurikulum && (
             <>
               <button
+                onClick={() => setViewMode('pengaturan-jam')}
+                className="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-xl text-sm font-medium flex items-center gap-2 transition-colors border border-amber-200"
+              >
+                <Clock className="w-4 h-4 text-amber-600" />
+                <span>Pengaturan Jam Ke / Waktu</span>
+              </button>
+
+              <button
                 onClick={() => setIsCopyModalOpen(true)}
                 className="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-sm font-medium flex items-center gap-2 transition-colors border border-indigo-200"
               >
@@ -461,6 +540,17 @@ export const JadwalPelajaran: React.FC = () => {
           </button>
 
           <button
+            onClick={() => setViewMode('pengaturan-jam')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              viewMode === 'pengaturan-jam' 
+                ? 'bg-white text-amber-700 shadow-sm font-semibold' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Pengaturan Jam
+          </button>
+
+          <button
             onClick={() => setViewMode('deteksi-bentrok')}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all relative ${
               viewMode === 'deteksi-bentrok' 
@@ -579,11 +669,11 @@ export const JadwalPelajaran: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {TIME_SLOTS.map(slot => (
+                {timeSlots.map(slot => (
                   <tr key={slot.jamKe} className="border-b border-slate-100">
                     {/* Waktu Cell */}
                     <td className="py-3 px-2 bg-slate-50/50 border-r border-slate-200 text-center font-medium text-slate-600">
-                      <div className="font-bold text-indigo-600 text-xs">Jam {slot.jamKe}</div>
+                      <div className="font-bold text-indigo-600 text-xs">{slot.label || `Jam ${slot.jamKe}`}</div>
                       <div className="text-[11px] text-slate-400 mt-0.5">{slot.mulai} - {slot.selesai}</div>
                     </td>
 
@@ -690,10 +780,10 @@ export const JadwalPelajaran: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {TIME_SLOTS.map(slot => (
+                {timeSlots.map(slot => (
                   <tr key={slot.jamKe} className="border-b border-slate-100">
                     <td className="py-3 px-2 bg-slate-50/50 border-r border-slate-200 text-center font-medium text-slate-600">
-                      <div className="font-bold text-emerald-700 text-xs">Jam {slot.jamKe}</div>
+                      <div className="font-bold text-emerald-700 text-xs">{slot.label || `Jam ${slot.jamKe}`}</div>
                       <div className="text-[11px] text-slate-400 mt-0.5">{slot.mulai} - {slot.selesai}</div>
                     </td>
 
@@ -867,6 +957,104 @@ export const JadwalPelajaran: React.FC = () => {
         </div>
       )}
 
+      {/* VIEW 5: PENGATURAN JAM KE / WAKTU */}
+      {viewMode === 'pengaturan-jam' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-amber-50 text-amber-700 rounded-2xl">
+                <Clock className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">Pengaturan Jam Pelajaran & Waktu KBM</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Atur daftar Jam Ke (Jam ke-1, Jam ke-2, dst) beserta durasi waktu mulai dan selesai untuk seluruh jadwal.
+                </p>
+              </div>
+            </div>
+
+            {isAdminOrKurikulum && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleResetTimeSlots}
+                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" /> Reset Default
+                </button>
+                <button
+                  onClick={() => handleOpenTimeSlotModal()}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Tambah Jam Ke Baru
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                  <th className="py-3 px-4 w-24">Urutan</th>
+                  <th className="py-3 px-4">Nama / Label Sesi</th>
+                  <th className="py-3 px-4">Waktu Mulai</th>
+                  <th className="py-3 px-4">Waktu Selesai</th>
+                  <th className="py-3 px-4">Durasi Sesi</th>
+                  {isAdminOrKurikulum && <th className="py-3 px-4 text-center w-28">Aksi</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {timeSlots.map((s) => {
+                  const [mH, mM] = (s.mulai || '07:00').split(':').map(Number);
+                  const [sH, sM] = (s.selesai || '07:40').split(':').map(Number);
+                  const durasi = (sH * 60 + sM) - (mH * 60 + mM);
+
+                  return (
+                    <tr key={s.id || s.jamKe} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-4">
+                        <span className="px-2.5 py-1 bg-indigo-100 text-indigo-800 rounded-lg font-extrabold text-xs">
+                          Jam {s.jamKe}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 font-bold text-slate-800">
+                        {s.label || `Jam Ke-${s.jamKe}`}
+                      </td>
+                      <td className="py-3 px-4 text-slate-700 font-semibold">{s.mulai} WIB</td>
+                      <td className="py-3 px-4 text-slate-700 font-semibold">{s.selesai} WIB</td>
+                      <td className="py-3 px-4">
+                        <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-[11px] font-medium">
+                          {durasi > 0 ? `${durasi} Menit` : '-'}
+                        </span>
+                      </td>
+                      {isAdminOrKurikulum && (
+                        <td className="py-3 px-4 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => handleOpenTimeSlotModal(s)}
+                              className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                              title="Edit Jam Ke"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTimeSlot(s.id || `TS_${s.jamKe}`)}
+                              className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                              title="Hapus"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* MODAL: TAMBAH / EDIT JADWAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
@@ -915,8 +1103,8 @@ export const JadwalPelajaran: React.FC = () => {
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500"
                     required
                   >
-                    {TIME_SLOTS.map(s => (
-                      <option key={s.jamKe} value={s.jamKe}>Jam {s.jamKe} ({s.mulai}-{s.selesai})</option>
+                    {timeSlots.map(s => (
+                      <option key={s.jamKe} value={s.jamKe}>{s.label || `Jam ${s.jamKe}`} ({s.mulai}-{s.selesai})</option>
                     ))}
                   </select>
                 </div>
@@ -1110,6 +1298,93 @@ export const JadwalPelajaran: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PENGATURAN JAM KE / WAKTU */}
+      {isTimeSlotModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-150">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                <Clock className="w-4 h-4 text-amber-600" />
+                {editingTimeSlot ? 'Edit Pengaturan Jam Pelajaran' : 'Tambah Jam Pelajaran Baru'}
+              </h3>
+              <button
+                onClick={() => setIsTimeSlotModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTimeSlot} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Urutan Jam Ke- (Angka)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={timeSlotForm.jamKe}
+                  onChange={(e) => setTimeSlotForm({ ...timeSlotForm, jamKe: Number(e.target.value) })}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Nama / Label Sesi</label>
+                <input
+                  type="text"
+                  placeholder="Contoh: Jam Ke-1 / Istirahat Pertama"
+                  value={timeSlotForm.label}
+                  onChange={(e) => setTimeSlotForm({ ...timeSlotForm, label: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Waktu Mulai</label>
+                  <input
+                    type="time"
+                    value={timeSlotForm.mulai}
+                    onChange={(e) => setTimeSlotForm({ ...timeSlotForm, mulai: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Waktu Selesai</label>
+                  <input
+                    type="time"
+                    value={timeSlotForm.selesai}
+                    onChange={(e) => setTimeSlotForm({ ...timeSlotForm, selesai: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsTimeSlotModalOpen(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors"
+                >
+                  Simpan Jam Pelajaran
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
