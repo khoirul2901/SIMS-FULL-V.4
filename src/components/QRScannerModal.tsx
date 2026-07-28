@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+// @ts-ignore
 import jsQR from 'jsqr';
 import { 
   X, 
