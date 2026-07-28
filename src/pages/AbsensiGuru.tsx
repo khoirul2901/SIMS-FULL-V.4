@@ -19,6 +19,7 @@ import {
   Edit3
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { QRScannerModal } from '../components/QRScannerModal';
 
 interface PengaturanScan {
   jamMasukMulai: string;
@@ -57,6 +58,7 @@ export const AbsensiGuru = () => {
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [tempPengaturan, setTempPengaturan] = useState<PengaturanScan>(pengaturan);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   // Helper mendapatkan nama hari Indonesia
   const getNamaHari = (dateString: string) => {
@@ -164,106 +166,77 @@ export const AbsensiGuru = () => {
     }
   };
 
-  // Automatic Evaluation for QR Code Scan
-  const processQrScan = (nip: string) => {
-    const guru = guruData.find(g => g.nip === nip);
+  // Automatic Evaluation for QR Code Scan via QRScannerModal
+  const handleScanGuruQR = (rawCode: string) => {
+    const cleanCode = rawCode.trim();
+    const guru = guruData.find(g => g.nip === cleanCode || (g.id && g.id === cleanCode));
     if (!guru) {
-      Swal.fire({
-        icon: 'error',
+      return {
+        success: false,
+        type: 'error' as const,
         title: 'Guru Tidak Ditemukan',
-        text: `NIP ${nip} tidak terdaftar pada sistem data guru.`
-      });
-      return;
+        message: `NIP "${cleanCode}" tidak terdaftar dalam data guru.`
+      };
     }
 
     // 1. Check Schedule Constraint
     const jadwalHari = jadwalData.filter(j => j.guru === guru.nama && j.hari === hariIni);
     const adaJadwal = jadwalHari.length > 0;
+    let keteranganTambahan = '';
 
     if (pengaturan.wajibJadwalHariIni && !adaJadwal) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Tidak Ada Jadwal Mengajar',
-        html: `
-          <div class="text-left text-xs space-y-2">
-            <p><strong>${guru.nama}</strong> tidak memiliki jadwal mengajar pada hari <strong>${hariIni}</strong>.</p>
-            <p class="text-slate-500">Aturan validasi jadwal mengajar sedang aktif.</p>
-          </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Lanjutkan Absen Manual',
-        cancelButtonText: 'Batal'
-      }).then((res) => {
-        if (res.isConfirmed) {
-          executeScanAbsen(guru, 'Hadir', 'Diabsen manual (Luar Jadwal Mengajar)');
-        }
-      });
-      return;
+      keteranganTambahan = ' (Luar Jadwal Mengajar)';
     }
 
     // 2. Check Scan Operating Hours
     const now = new Date();
     const currentHM = now.toTimeString().slice(0, 5); // "HH:MM"
+    const nowTimeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     let calculatedStatus = 'Hadir';
     let autoKeterangan = '';
 
     if (jenisAbsen === 'Masuk') {
       if (!pengaturan.izinkanScanLuarJam && (currentHM < pengaturan.jamMasukMulai || currentHM > pengaturan.jamMasukAkhir)) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Di Luar Jam Operasional Scan',
-          html: `
-            <div class="text-xs text-slate-600 space-y-1">
-              <p>Waktu scan saat ini: <strong>${currentHM}</strong></p>
-              <p>Jam operasional scan Masuk: <strong>${pengaturan.jamMasukMulai} - ${pengaturan.jamMasukAkhir}</strong></p>
-            </div>
-          `
-        });
-        return;
+        return {
+          success: false,
+          type: 'error' as const,
+          title: 'Luar Jam Operasional Scan',
+          message: `Jam masuk saat ini (${currentHM}) di luar jam operasional (${pengaturan.jamMasukMulai} - ${pengaturan.jamMasukAkhir}).`
+        };
       }
 
       if (currentHM <= pengaturan.jamMasukBatas) {
         calculatedStatus = 'Hadir';
-        autoKeterangan = `Scan QR tepat waktu (${currentHM})`;
+        autoKeterangan = `Scan QR Masuk (${currentHM})${keteranganTambahan}`;
       } else {
         calculatedStatus = 'Terlambat';
-        autoKeterangan = `Terlambat via Scan QR (${currentHM})`;
+        autoKeterangan = `Terlambat via Scan QR (${currentHM})${keteranganTambahan}`;
       }
     } else {
       // Pulang
       if (!pengaturan.izinkanScanLuarJam && (currentHM < pengaturan.jamPulangMulai || currentHM > pengaturan.jamPulangBatas)) {
-        Swal.fire({
-          icon: 'error',
+        return {
+          success: false,
+          type: 'error' as const,
           title: 'Belum Waktu Scan Pulang',
-          html: `
-            <div class="text-xs text-slate-600 space-y-1">
-              <p>Waktu scan saat ini: <strong>${currentHM}</strong></p>
-              <p>Jam operasional scan Pulang: <strong>${pengaturan.jamPulangMulai} - ${pengaturan.jamPulangBatas}</strong></p>
-            </div>
-          `
-        });
-        return;
+          message: `Waktu scan pulang (${currentHM}) di luar jam (${pengaturan.jamPulangMulai} - ${pengaturan.jamPulangBatas}).`
+        };
       }
       calculatedStatus = 'Hadir';
-      autoKeterangan = `Scan QR Pulang (${currentHM})`;
+      autoKeterangan = `Scan QR Pulang (${currentHM})${keteranganTambahan}`;
     }
 
-    executeScanAbsen(guru, calculatedStatus, autoKeterangan);
-  };
-
-  const executeScanAbsen = (guru: any, status: string, keterangan: string) => {
-    const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    
+    // Record attendance
     const existingIdx = absensiGuruData.findIndex(a => a.nip === guru.nip && a.tanggal === date && a.jenis === jenisAbsen);
     const newEntry = {
       id: existingIdx >= 0 ? absensiGuruData[existingIdx].id : `ABSG_QR_${Date.now()}_${guru.nip}`,
       tanggal: date,
       nip: guru.nip,
       jenis: jenisAbsen,
-      status,
-      waktu: nowTime,
-      keterangan,
+      status: calculatedStatus,
+      waktu: nowTimeStr,
+      keterangan: autoKeterangan,
       metode: 'Scan QR'
     };
 
@@ -275,89 +248,17 @@ export const AbsensiGuru = () => {
       setAbsensiGuruData([...absensiGuruData, newEntry]);
     }
 
-    Swal.fire({
-      icon: status === 'Terlambat' ? 'warning' : 'success',
-      title: `Absensi ${jenisAbsen} Dicatat`,
-      html: `
-        <div class="p-3 bg-slate-50 rounded-xl text-left text-xs space-y-2 border border-slate-200">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-800">${guru.nama}</span>
-            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${status === 'Terlambat' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">${status}</span>
-          </div>
-          <p class="text-slate-500">NIP: ${guru.nip} • Mapel: ${guru.mapel}</p>
-          <p class="text-slate-700"><strong>Waktu Scan:</strong> ${nowTime}</p>
-          <p class="text-slate-600 italic">"${keterangan}"</p>
-        </div>
-      `,
-      timer: 2500,
-      showConfirmButton: false
-    });
+    const isTerlambat = calculatedStatus === 'Terlambat';
+    const isLuarJadwal = pengaturan.wajibJadwalHariIni && !adaJadwal;
+
+    return {
+      success: true,
+      type: (isTerlambat || isLuarJadwal) ? 'warning' as const : 'success' as const,
+      title: `Absen ${jenisAbsen} ${calculatedStatus}`,
+      message: `${guru.nama} (${guru.nip}) • Mapel: ${guru.mapel || '-'} • Waktu: ${nowTimeStr}`
+    };
   };
 
-  // Open Scanner Modal
-  const handleScanQR = () => {
-    Swal.fire({
-      title: `Scan QR Absensi Guru (${jenisAbsen})`,
-      html: `
-        <div class="flex flex-col items-center justify-center p-2">
-          <div id="reader-guru" style="width: 280px; height: 280px;" class="mb-3 rounded-xl overflow-hidden border border-slate-200 shadow-inner"></div>
-          <p class="text-xs text-slate-500">Arahkan kamera ke Kartu QR Code Guru</p>
-          <div class="mt-3 w-full">
-            <input type="text" id="manual-nip" class="w-full px-3 py-2 border rounded-xl text-xs focus:ring-2 focus:ring-indigo-500" placeholder="Ketik NIP guru untuk tes manual...">
-          </div>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: 'Proses Absen',
-      cancelButtonText: 'Batal',
-      didOpen: () => {
-        if (!(window as any).Html5QrcodeScanner) {
-          const script = document.createElement('script');
-          script.src = "https://unpkg.com/html5-qrcode";
-          script.async = true;
-          script.onload = startScanner;
-          document.body.appendChild(script);
-        } else {
-          startScanner();
-        }
-
-        function startScanner() {
-          try {
-            const scanner = new (window as any).Html5QrcodeScanner(
-              "reader-guru", { fps: 10, qrbox: { width: 220, height: 220 } }, false
-            );
-            scanner.render(onScanSuccess, onScanFailure);
-
-            function onScanSuccess(decodedText: string) {
-              scanner.clear();
-              (document.getElementById('manual-nip') as HTMLInputElement).value = decodedText;
-              Swal.clickConfirm();
-            }
-            function onScanFailure() {}
-            (Swal.getPopup() as any).scanner = scanner;
-          } catch(e) {}
-        }
-      },
-      willClose: () => {
-        const scanner = (Swal.getPopup() as any).scanner;
-        if (scanner) {
-          scanner.clear().catch((e: any) => console.log('Clear error', e));
-        }
-      },
-      preConfirm: () => {
-        const manualNip = (document.getElementById('manual-nip') as HTMLInputElement).value;
-        if (!manualNip) {
-          Swal.showValidationMessage('Masukkan NIP guru terlebih dahulu');
-          return false;
-        }
-        return manualNip;
-      }
-    }).then((result) => {
-      if (result.isConfirmed && result.value) {
-        processQrScan(result.value);
-      }
-    });
-  };
 
   // Stats calculation
   const stats = {
@@ -401,7 +302,7 @@ export const AbsensiGuru = () => {
           </button>
 
           <button 
-            onClick={handleScanQR}
+            onClick={() => setIsScannerOpen(true)}
             className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm flex items-center gap-2 shadow-sm transition-colors"
           >
             <QrCode className="w-4 h-4" />
@@ -891,6 +792,16 @@ export const AbsensiGuru = () => {
           </div>
         </div>
       )}
+
+      {/* QR Scanner Modal for Guru */}
+      <QRScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        title={`Scan QR Code Absensi Guru (${jenisAbsen})`}
+        subtitle="Otomatis mendeteksi QR Code dan mengevaluasi jam kerja & jadwal mengajar"
+        manualPlaceholder="Atau ketik NIP guru di sini..."
+        onScan={handleScanGuruQR}
+      />
     </div>
   );
 };
