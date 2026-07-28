@@ -1,6 +1,4 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-// @ts-ignore
-import jsQR from 'jsqr';
 import { 
   X, 
   Camera, 
@@ -15,6 +13,40 @@ import {
   Keyboard,
   QrCode
 } from 'lucide-react';
+
+// Dynamic loader for jsQR to prevent build/bundle errors on server deployment
+const loadJsQRDecoder = (): Promise<any> => {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && (window as any).jsQR) {
+      return resolve((window as any).jsQR);
+    }
+
+    if (typeof document === 'undefined') {
+      return resolve(null);
+    }
+
+    let script = document.getElementById('jsqr-decoder-script') as HTMLScriptElement;
+    if (!script) {
+      script = document.createElement('script');
+      script.id = 'jsqr-decoder-script';
+      script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+
+    const check = setInterval(() => {
+      if ((window as any).jsQR) {
+        clearInterval(check);
+        resolve((window as any).jsQR);
+      }
+    }, 50);
+
+    setTimeout(() => {
+      clearInterval(check);
+      resolve((window as any).jsQR || null);
+    }, 5000);
+  });
+};
 
 export interface ScanResultNotification {
   id: string;
@@ -232,6 +264,17 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
     }
   };
 
+  const jsQRDecoderRef = useRef<any>(null);
+
+  // Pre-load jsQR decoder when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      loadJsQRDecoder().then((decoder) => {
+        jsQRDecoderRef.current = decoder;
+      });
+    }
+  }, [isOpen]);
+
   // Canvas Scan Frame Loop
   useEffect(() => {
     if (!isOpen || !stream || cameraError) return;
@@ -253,12 +296,15 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-          const qrCode = jsQR(imageData.data, imageData.width, imageData.height, {
-            inversionAttempts: 'dontInvert'
-          });
+          const jsQR = jsQRDecoderRef.current || (typeof window !== 'undefined' && (window as any).jsQR);
+          if (jsQR) {
+            const qrCode = jsQR(imageData.data, imageData.width, imageData.height, {
+              inversionAttempts: 'dontInvert'
+            });
 
-          if (qrCode && qrCode.data) {
-            processCode(qrCode.data);
+            if (qrCode && qrCode.data) {
+              processCode(qrCode.data);
+            }
           }
         }
       }
