@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { DatabaseProvider } from './context/DatabaseContext';
@@ -38,7 +38,7 @@ export default function App() {
     <ThemeProvider>
       <DatabaseProvider>
         <AuthProvider>
-          <BrowserRouter>
+          <HashRouter>
             <Routes>
               {/* Public Landing Page */}
               <Route path="/" element={<LandingPage />} />
@@ -83,7 +83,7 @@ export default function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>
-          </BrowserRouter>
+          </HashRouter>
         </AuthProvider>
       </DatabaseProvider>
     </ThemeProvider>
