@@ -1,5 +1,9 @@
 /// <reference types="vite/client" />
 
+interface Window {
+  jsQR?: (data: Uint8ClampedArray, width: number, height: number, options?: any) => any;
+}
+
 declare module 'jsqr' {
   export interface QRCodeOptions {
     inversionAttempts?: 'dontInvert' | 'onlyInvert' | 'attemptBoth' | 'invertFirst';
