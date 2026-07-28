@@ -305,6 +305,17 @@ export const INITIAL_JADWAL_DATA = [
   { id: 'JDW017', hari: 'Rabu', jamKe: 3, waktuMulai: '08:20', waktuSelesai: '09:00', kelas: 'VII-A', mapel: 'Seni Budaya', guru: 'Siti Aminah, M.Pd', ruangan: 'Ruang Kesenian', keterangan: '' }
 ];
 
+export const INITIAL_TIME_SLOTS_DATA = [
+  { id: 'TS1', jamKe: 1, mulai: '07:00', selesai: '07:40', label: 'Jam Ke-1' },
+  { id: 'TS2', jamKe: 2, mulai: '07:40', selesai: '08:20', label: 'Jam Ke-2' },
+  { id: 'TS3', jamKe: 3, mulai: '08:20', selesai: '09:00', label: 'Jam Ke-3' },
+  { id: 'TS4', jamKe: 4, mulai: '09:00', selesai: '09:40', label: 'Jam Ke-4' },
+  { id: 'TS5', jamKe: 5, mulai: '10:00', selesai: '10:40', label: 'Jam Ke-5' },
+  { id: 'TS6', jamKe: 6, mulai: '10:40', selesai: '11:20', label: 'Jam Ke-6' },
+  { id: 'TS7', jamKe: 7, mulai: '11:20', selesai: '12:00', label: 'Jam Ke-7' },
+  { id: 'TS8', jamKe: 8, mulai: '12:30', selesai: '13:10', label: 'Jam Ke-8' },
+];
+
 type DatabaseContextType = {
   siswaData: any[];
   setSiswaData: (data: any[]) => void;
@@ -328,6 +339,8 @@ type DatabaseContextType = {
   setBimbinganData: (data: any[]) => void;
   jadwalData: any[];
   setJadwalData: (data: any[]) => void;
+  timeSlotsData: any[];
+  setTimeSlotsData: (data: any[]) => void;
   // Finance Data
   jenisPembayaranData: JenisPembayaran[];
   setJenisPembayaranData: (data: JenisPembayaran[]) => void;
@@ -412,6 +425,11 @@ export const DatabaseProvider: React.FC<{children: React.ReactNode}> = ({ childr
     return saved ? JSON.parse(saved) : INITIAL_JADWAL_DATA;
   });
 
+  const [timeSlotsData, _setTimeSlotsData] = useState<any[]>(() => {
+    const saved = localStorage.getItem('sims_time_slots');
+    return saved ? JSON.parse(saved) : INITIAL_TIME_SLOTS_DATA;
+  });
+
   const [jenisPembayaranData, _setJenisPembayaranData] = useState<JenisPembayaran[]>(() => {
     const saved = localStorage.getItem('sims_jenis_pembayaran');
     return saved ? JSON.parse(saved) : INITIAL_JENIS_PEMBAYARAN;
@@ -449,6 +467,8 @@ export const DatabaseProvider: React.FC<{children: React.ReactNode}> = ({ childr
         if (res.data.nilai?.length) _setNilaiData(res.data.nilai);
         if (res.data.bimbingan?.length) _setBimbinganData(res.data.bimbingan);
         if (res.data.jadwal?.length) _setJadwalData(res.data.jadwal);
+        if (res.data.timeSlots?.length) _setTimeSlotsData(res.data.timeSlots);
+        if (res.data.timeSlots?.length) _setTimeSlotsData(res.data.timeSlots);
         if (res.data.jenisPembayaran?.length) _setJenisPembayaranData(res.data.jenisPembayaran);
         if (res.data.tagihanSiswa?.length) _setTagihanSiswaData(res.data.tagihanSiswa);
         if (res.data.pengeluaranKas?.length) _setPengeluaranKasData(res.data.pengeluaranKas);
@@ -526,6 +546,12 @@ export const DatabaseProvider: React.FC<{children: React.ReactNode}> = ({ childr
     gasApiCall('syncAllData', { payload: { type: 'jadwal', data } });
   };
 
+  const setTimeSlotsData = (data: any[]) => {
+    _setTimeSlotsData(data);
+    localStorage.setItem('sims_time_slots', JSON.stringify(data));
+    gasApiCall('syncAllData', { payload: { type: 'timeSlots', data } });
+  };
+
   const setJenisPembayaranData = (data: JenisPembayaran[]) => {
     _setJenisPembayaranData(data);
     localStorage.setItem('sims_jenis_pembayaran', JSON.stringify(data));
@@ -567,6 +593,7 @@ export const DatabaseProvider: React.FC<{children: React.ReactNode}> = ({ childr
     setNilaiData(INITIAL_NILAI_DATA);
     setBimbinganData(INITIAL_BIMBINGAN_DATA);
     setJadwalData(INITIAL_JADWAL_DATA);
+    setTimeSlotsData(INITIAL_TIME_SLOTS_DATA);
     setJenisPembayaranData(INITIAL_JENIS_PEMBAYARAN);
     setTagihanSiswaData(INITIAL_TAGIHAN_SISWA);
     setPengeluaranKasData(INITIAL_PENGELUARAN_KAS);
@@ -587,6 +614,7 @@ export const DatabaseProvider: React.FC<{children: React.ReactNode}> = ({ childr
       nilaiData, setNilaiData,
       bimbinganData, setBimbinganData,
       jadwalData, setJadwalData,
+      timeSlotsData, setTimeSlotsData,
       jenisPembayaranData, setJenisPembayaranData,
       tagihanSiswaData, setTagihanSiswaData,
       pengeluaranKasData, setPengeluaranKasData,
