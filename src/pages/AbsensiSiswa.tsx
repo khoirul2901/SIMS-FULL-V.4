@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDatabase } from '../context/DatabaseContext';
-import { QrCode, Search, Save, Calendar, CheckSquare } from 'lucide-react';
-import Swal from 'sweetalert2';
-
+import { QrCode, Search, Calendar, CheckSquare } from 'lucide-react';
+import { QRScannerModal } from '../components/QRScannerModal';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -28,7 +27,7 @@ export const AbsensiSiswa = () => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
   const [searchTerm, setSearchTerm] = useState('');
-
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const uniqueKelas = Array.from(new Set(kelasData.map(k => k.namaKelas).filter((k): k is string => Boolean(k)))).sort();
   
@@ -38,8 +37,6 @@ export const AbsensiSiswa = () => {
     }
   }, [uniqueKelas, selectedKelas]);
 
-
-  
   // Get all students for the selected class, merged with current absensi status
   const studentsInClass = siswaData.filter(s => s.kelas === selectedKelas);
   
@@ -72,100 +69,64 @@ export const AbsensiSiswa = () => {
     }
   };
 
+  const handleScanStudentQR = (rawCode: string) => {
+    const cleanCode = rawCode.trim();
+    // Search student by NIS or ID or NISN
+    const student = siswaData.find(s => 
+      s.nis === cleanCode || 
+      (s.nisn && s.nisn === cleanCode) ||
+      (s.id && s.id === cleanCode)
+    );
 
-  const handleScanQR = () => {
-    Swal.fire({
-      title: 'Scan QR Code Absensi',
-      html: `
-        <div class="flex flex-col items-center justify-center p-4">
-          <div id="reader" style="width: 300px; height: 300px;" class="mb-4"></div>
-          <p class="text-sm text-slate-500 mt-2">Arahkan Kamera ke QR Code Siswa</p>
-          <div class="mt-4 w-full">
-            <input type="text" id="manual-nis" class="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Atau ketik NIS manual di sini">
-          </div>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: 'Absen Manual',
-      cancelButtonText: 'Tutup',
-      didOpen: () => {
-        // Load html5-qrcode dynamically
-        if (!(window as any).Html5QrcodeScanner) {
-          const script = document.createElement('script');
-          script.src = "https://unpkg.com/html5-qrcode";
-          script.async = true;
-          script.onload = startScanner;
-          document.body.appendChild(script);
-        } else {
-          startScanner();
-        }
+    if (!student) {
+      return {
+        success: false,
+        type: 'error' as const,
+        title: 'Siswa Tidak Ditemukan',
+        message: `NIS "${cleanCode}" tidak terdaftar pada data siswa.`
+      };
+    }
 
-        function startScanner() {
-          const scanner = new (window as any).Html5QrcodeScanner(
-            "reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false
-          );
-          scanner.render(onScanSuccess, onScanFailure);
-          
-          function onScanSuccess(decodedText: string, decodedResult: any) {
-            scanner.clear();
-            (document.getElementById('manual-nis') as HTMLInputElement).value = decodedText;
-            Swal.clickConfirm();
-          }
-          function onScanFailure(error: any) {}
-          
-          (Swal.getPopup() as any).scanner = scanner;
-        }
-      },
-      willClose: () => {
-        const scanner = (Swal.getPopup() as any).scanner;
-        if (scanner) {
-          scanner.clear().catch((e: any) => console.log('Failed to clear scanner', e));
-        }
-      },
-      preConfirm: () => {
-        const manualNis = (document.getElementById('manual-nis') as HTMLInputElement).value;
-        if (!manualNis) {
-          Swal.showValidationMessage('Masukkan NIS terlebih dahulu');
-          return false;
-        }
-        return manualNis;
-      }
-    }).then((result) => {
-      if (result.isConfirmed && result.value) {
-        const nis = result.value;
-        const student = siswaData.find(s => s.nis === nis);
-        if (student) {
-          handleStatusChange(student.nis, 'Hadir');
-          Swal.fire({
-            icon: 'success',
-            title: 'Berhasil',
-            text: `Absensi untuk ${student.nama} berhasil dicatat.`,
-            timer: 2000,
-            showConfirmButton: false
-          });
-        } else {
-          Swal.fire('Gagal', 'Siswa dengan NIS tersebut tidak ditemukan.', 'error');
-        }
-      }
-    });
+    // Check existing status
+    const existing = absensiData.find(a => a.nis === student.nis && a.tanggal === date && a.jenis === jenisAbsen);
+    if (existing && existing.status === 'Hadir') {
+      return {
+        success: true,
+        type: 'warning' as const,
+        title: 'Sudah Absen Hadir',
+        message: `${student.nama} (${student.nis}) - Kelas ${student.kelas} sudah tercatat Hadir.`
+      };
+    }
+
+    // Record Hadir
+    handleStatusChange(student.nis, 'Hadir');
+
+    return {
+      success: true,
+      type: 'success' as const,
+      title: `Absen ${jenisAbsen} Berhasil!`,
+      message: `${student.nama} (${student.nis}) • Kelas ${student.kelas}`
+    };
   };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Absensi Siswa</h1>
-          <p className="text-sm text-slate-500 mt-1">Input data kehadiran siswa per kelas</p>
+          <p className="text-sm text-slate-500 mt-1">Input data kehadiran siswa per kelas & scan QR otomatis</p>
         </div>
         <div className="flex items-center gap-2">
           <button 
-            onClick={handleScanQR}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white hover:bg-slate-900 font-medium rounded-lg transition-colors text-sm"
+            onClick={() => setIsScannerOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 font-semibold rounded-xl transition-all shadow-md hover:shadow-indigo-200 text-sm"
           >
             <QrCode className="w-4 h-4" />
-            Scan QR (Otomatis)
+            Scan QR (Auto Detect)
           </button>
         </div>
       </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Filters Panel */}
@@ -281,6 +242,16 @@ export const AbsensiSiswa = () => {
           </div>
         </div>
       </div>
+
+      {/* QR Scanner Modal */}
+      <QRScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        title={`Scan QR Code Absensi Siswa (${jenisAbsen})`}
+        subtitle="Sistem otomatis mendeteksi QR Code dan mencatat kehadiran tanpa menutup kamera"
+        manualPlaceholder="Atau ketik NIS siswa di sini..."
+        onScan={handleScanStudentQR}
+      />
     </div>
   );
 };
