@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Award,
   HeartHandshake,
+  UserCheck,
   Globe,
   ExternalLink,
   Receipt,
@@ -62,6 +63,7 @@ const MENU_ITEMS: MenuItem[] = [
       { title: 'Nilai & Rapor', path: '/akademik/nilai', icon: Award, roles: ['Admin', 'Kepala Sekolah', 'Guru', 'Wali Kelas'] },
       { title: 'Pelanggaran', path: '/akademik/pelanggaran', icon: AlertTriangle, roles: ['Admin', 'Guru', 'Wali Kelas', 'BK'] },
       { title: 'Bimbingan Konseling', path: '/akademik/bimbingan-konseling', icon: HeartHandshake, roles: ['Admin', 'Guru', 'Wali Kelas', 'BK'] },
+      { title: 'Guru Wali', path: '/akademik/guru-wali', icon: UserCheck, roles: ['Admin', 'Kepala Sekolah', 'Guru', 'Wali Kelas', 'BK'] },
     ]
   },
   {
