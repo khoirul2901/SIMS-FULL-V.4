@@ -9,6 +9,218 @@ import {
   INITIAL_SLIP_GAJI
 } from '../data/initialKeuangan';
 
+import { GuruWaliAssignment, DiagnostikBK, TindakLanjutWali } from '../types/guruWali';
+
+// Initial Guru Wali & Diagnostik BK Data
+export const INITIAL_GURU_WALI_ASSIGNMENTS: GuruWaliAssignment[] = [
+  {
+    id: 'GWA001',
+    guruId: '1',
+    guruNip: '198001012005011001',
+    guruNama: 'Budi Santoso, S.Pd',
+    siswaId: '1',
+    siswaNis: '2023001',
+    siswaNama: 'Ahmad Maulana',
+    siswaKelas: 'VII-A',
+    tanggalPenugasan: '2026-07-10',
+    tahunAjaran: '2026/2027',
+    catatanAwal: 'Fokus pembimbingan adaptasi belajar dan matematika'
+  },
+  {
+    id: 'GWA002',
+    guruId: '1',
+    guruNip: '198001012005011001',
+    guruNama: 'Budi Santoso, S.Pd',
+    siswaId: '2',
+    siswaNis: '2023002',
+    siswaNama: 'Siti Nurhaliza',
+    siswaKelas: 'VII-A',
+    tanggalPenugasan: '2026-07-10',
+    tahunAjaran: '2026/2027',
+    catatanAwal: 'Pengembangan potensi sastra dan kepemimpinan'
+  },
+  {
+    id: 'GWA003',
+    guruId: '2',
+    guruNip: '198205122008012003',
+    guruNama: 'Siti Aminah, M.Pd',
+    siswaId: '3',
+    siswaNis: '2023003',
+    siswaNama: 'Budi Santoso',
+    siswaKelas: 'VII-B',
+    tanggalPenugasan: '2026-07-12',
+    tahunAjaran: '2026/2027',
+    catatanAwal: 'Pendampingan disiplin jam masuk sekolah'
+  },
+  {
+    id: 'GWA004',
+    guruId: '2',
+    guruNip: '198205122008012003',
+    guruNama: 'Siti Aminah, M.Pd',
+    siswaId: '4',
+    siswaNis: '2023004',
+    siswaNama: 'Citra Kirana',
+    siswaKelas: 'VII-B',
+    tanggalPenugasan: '2026-07-12',
+    tahunAjaran: '2026/2027',
+    catatanAwal: 'Monitoring partisipasi ekstrakurikuler'
+  },
+  {
+    id: 'GWA005',
+    guruId: '3',
+    guruNip: '199003032015011003',
+    guruNama: 'Ahmad Dahlan, S.Ag',
+    siswaId: '5',
+    siswaNis: '2023005',
+    siswaNama: 'Deni Sumargo',
+    siswaKelas: 'VIII-A',
+    tanggalPenugasan: '2026-07-15',
+    tahunAjaran: '2026/2027',
+    catatanAwal: 'Perlu pengawasan khusus motivasi dan hadir kelas'
+  },
+  {
+    id: 'GWA006',
+    guruId: '3',
+    guruNip: '199003032015011003',
+    guruNama: 'Ahmad Dahlan, S.Ag',
+    siswaId: '6',
+    siswaNis: '2022001',
+    siswaNama: 'Bima Sakti',
+    siswaKelas: 'VIII-B',
+    tanggalPenugasan: '2026-07-15',
+    tahunAjaran: '2026/2027',
+    catatanAwal: 'Penguatan kebiasaan ibadah & tata tertib'
+  }
+];
+
+export const INITIAL_DIAGNOSTIK_BK: DiagnostikBK[] = [
+  {
+    id: 'DG001',
+    siswaId: '1',
+    siswaNis: '2023001',
+    siswaNama: 'Ahmad Maulana',
+    siswaKelas: 'VII-A',
+    tanggalTes: '2026-07-14',
+    tahunAjaran: '2026/2027',
+    gayaBelajar: 'Visual',
+    tingkatPemahamanAwal: 'Sedang',
+    profilKeluarga: 'Anak pertama dari 3 bersaudara. Suasana rumah kondusif, orang tua sangat mendukung.',
+    motivasiBelajar: 'Sangat Tinggi',
+    minatBakat: 'Sains, Robotik, dan Menggambar Diagram',
+    potensiHambatan: 'Sering merasa cemas saat menghadapi tes matematika hitungan cepat.',
+    rekomendasiBK: 'Guru Wali diharapkan memberikan dorongan percaya diri dan strategi pemetaan konsep visual untuk matematika.',
+    konselorNama: 'Siti Rahmawati, S.Pd (Guru BK)',
+    statusPenanganan: 'Dalam Proses'
+  },
+  {
+    id: 'DG002',
+    siswaId: '2',
+    siswaNis: '2023002',
+    siswaNama: 'Siti Nurhaliza',
+    siswaKelas: 'VII-A',
+    tanggalTes: '2026-07-14',
+    tahunAjaran: '2026/2027',
+    gayaBelajar: 'Auditori',
+    tingkatPemahamanAwal: 'Tinggi',
+    profilKeluarga: 'Keluarga harmonis, aktif dalam kegiatan sosial lingkungan.',
+    motivasiBelajar: 'Sangat Tinggi',
+    minatBakat: 'Sastra Indonesia, Puisi, dan Public Speaking',
+    potensiHambatan: 'Cenderung cepat bosan jika materi diajarkan terlalu lambat atau penuh dengan bacaan mandiri.',
+    rekomendasiBK: 'Libatkan dalam diskusi kelompok dan berikan peran sebagai ketua tim atau pengulas materi.',
+    konselorNama: 'Siti Rahmawati, S.Pd (Guru BK)',
+    statusPenanganan: 'Selesai'
+  },
+  {
+    id: 'DG003',
+    siswaId: '5',
+    siswaNis: '2023005',
+    siswaNama: 'Deni Sumargo',
+    siswaKelas: 'VIII-A',
+    tanggalTes: '2026-07-16',
+    tahunAjaran: '2026/2027',
+    gayaBelajar: 'Kinestetik',
+    tingkatPemahamanAwal: 'Perlu Bimbingan Khusus',
+    profilKeluarga: 'Tinggal bersama wali/nenek. Kurang pengawasan penggunaan gawai di rumah.',
+    motivasiBelajar: 'Kurang Motivasional',
+    minatBakat: 'Olahraga Sepak Bola & Otomotif',
+    potensiHambatan: 'Gaya belajar kinestetik tinggi, sulit duduk diam dalam durasi lama. Poin pelanggaran keterlambatan tinggi.',
+    rekomendasiBK: 'Butuh kontrol intensif harian dari Guru Wali, pemanggilan orang tua untuk komitmen jam tidur, dan metode belajar berbasis proyek fisik.',
+    konselorNama: 'Siti Rahmawati, S.Pd (Guru BK)',
+    statusPenanganan: 'Belum Ditindaklanjuti'
+  },
+  {
+    id: 'DG004',
+    siswaId: '3',
+    siswaNis: '2023003',
+    siswaNama: 'Budi Santoso',
+    siswaKelas: 'VII-B',
+    tanggalTes: '2026-07-16',
+    tahunAjaran: '2026/2027',
+    gayaBelajar: 'Campuran',
+    tingkatPemahamanAwal: 'Sedang',
+    profilKeluarga: 'Orang tua bekerja penuh waktu, komunikasi rumah via gawai.',
+    motivasiBelajar: 'Sedang',
+    minatBakat: 'Kesenian dan Teknologi Informasi',
+    potensiHambatan: 'Mudah terdistraksi media sosial saat malam hari.',
+    rekomendasiBK: 'Guru Wali mengontrol jadwal belajar mandiri dan memberikan lembar komitmen harian.',
+    konselorNama: 'Siti Rahmawati, S.Pd (Guru BK)',
+    statusPenanganan: 'Dalam Proses'
+  }
+];
+
+export const INITIAL_TINDAK_LANJUT_WALI: TindakLanjutWali[] = [
+  {
+    id: 'TLW001',
+    diagnostikId: 'DG001',
+    siswaNis: '2023001',
+    siswaNama: 'Ahmad Maulana',
+    siswaKelas: 'VII-A',
+    guruNip: '198001012005011001',
+    guruNama: 'Budi Santoso, S.Pd',
+    tanggalTindakLanjut: '2026-07-18',
+    jenisTindakLanjut: 'Konsultasi Belajar',
+    deskripsiLaporanBK: 'Anak cemas menghadapi latihan matematika cepat dan butuh pendampingan gaya belajar visual.',
+    tindakanWali: 'Melakukan konseling pribadi, memberikan template catatan peta konsep (mind mapping), dan mencocokkan metode belajar kelompok.',
+    hasilBimbingan: 'Siswa lebih percaya diri, sudah membuat target belajar mingguan, dan mulai aktif bertanya saat sesi matematika.',
+    status: 'Dalam Proses Bimbingan',
+    jadwalSesiBerikutnya: '2026-08-02',
+    catatanKemajuan: 'Ada peningkatan nilai latihan harian dari 75 menjadi 84.'
+  },
+  {
+    id: 'TLW002',
+    diagnostikId: 'DG002',
+    siswaNis: '2023002',
+    siswaNama: 'Siti Nurhaliza',
+    siswaKelas: 'VII-A',
+    guruNip: '198001012005011001',
+    guruNama: 'Budi Santoso, S.Pd',
+    tanggalTindakLanjut: '2026-07-20',
+    jenisTindakLanjut: 'Remidial/Pengayaan Khusus',
+    deskripsiLaporanBK: 'Potensi kecerdasan berbahasa & auditori sangat tinggi, perlu pengayaan ekstra agar tidak bosan di kelas.',
+    tindakanWali: 'Menunjuk siswa sebagai koordinator literasi kelas dan mendaftarkan dalam kompetisi membaca puisi tingkat sekolah.',
+    hasilBimbingan: 'Siswa sangat antusias dan mampu membimbing kawan-kawannya dalam tugas diskusi kelompok Bahasa.',
+    status: 'Selesai / Teratasi',
+    catatanKemajuan: 'Siswa berhasil meraih Juara 1 Lomba Baca Puisi tingkat sekolah.'
+  },
+  {
+    id: 'TLW003',
+    diagnostikId: 'DG004',
+    siswaNis: '2023003',
+    siswaNama: 'Budi Santoso',
+    siswaKelas: 'VII-B',
+    guruNip: '198205122008012003',
+    guruNama: 'Siti Aminah, M.Pd',
+    tanggalTindakLanjut: '2026-07-22',
+    jenisTindakLanjut: 'Bimbingan Karakter/Sikap',
+    deskripsiLaporanBK: 'Terdistraksi gawai malam hari yang berdampak pada keterlambatan masuk sekolah.',
+    tindakanWali: 'Membuat kartu kendali jam tidur & belajar yang ditandatangani orang tua setiap pagi.',
+    hasilBimbingan: 'Dalam kurun waktu 1 minggu terakhir tidak ada catatan keterlambatan.',
+    status: 'Dalam Proses Bimbingan',
+    jadwalSesiBerikutnya: '2026-08-05',
+    catatanKemajuan: 'Kedisiplinan membaik, namun masih perlu pemantauan konsistensi.'
+  }
+];
+
 // Shared initial data
 export const INITIAL_KELAS_DATA = [
   { id: '1', tingkat: 'VII', namaKelas: 'VII-A', waliKelas: 'Budi Santoso, S.Pd', jumlahSiswa: 32 },
@@ -341,6 +553,14 @@ type DatabaseContextType = {
   setJadwalData: (data: any[]) => void;
   timeSlotsData: any[];
   setTimeSlotsData: (data: any[]) => void;
+  // Guru Wali & Diagnostik BK Data
+  guruWaliAssignments: GuruWaliAssignment[];
+  setGuruWaliAssignments: (data: GuruWaliAssignment[]) => void;
+  diagnostikBKData: DiagnostikBK[];
+  setDiagnostikBKData: (data: DiagnostikBK[]) => void;
+  tindakLanjutWaliData: TindakLanjutWali[];
+  setTindakLanjutWaliData: (data: TindakLanjutWali[]) => void;
+
   // Finance Data
   jenisPembayaranData: JenisPembayaran[];
   setJenisPembayaranData: (data: JenisPembayaran[]) => void;
@@ -450,6 +670,21 @@ export const DatabaseProvider: React.FC<{children: React.ReactNode}> = ({ childr
     return saved ? JSON.parse(saved) : INITIAL_SLIP_GAJI;
   });
 
+  const [guruWaliAssignments, _setGuruWaliAssignments] = useState<GuruWaliAssignment[]>(() => {
+    const saved = localStorage.getItem('sims_guru_wali_assignments');
+    return saved ? JSON.parse(saved) : INITIAL_GURU_WALI_ASSIGNMENTS;
+  });
+
+  const [diagnostikBKData, _setDiagnostikBKData] = useState<DiagnostikBK[]>(() => {
+    const saved = localStorage.getItem('sims_diagnostik_bk');
+    return saved ? JSON.parse(saved) : INITIAL_DIAGNOSTIK_BK;
+  });
+
+  const [tindakLanjutWaliData, _setTindakLanjutWaliData] = useState<TindakLanjutWali[]>(() => {
+    const saved = localStorage.getItem('sims_tindak_lanjut_wali');
+    return saved ? JSON.parse(saved) : INITIAL_TINDAK_LANJUT_WALI;
+  });
+
   // Load from GAS on mount
   useEffect(() => {
     const loadFromGas = async () => {
@@ -468,11 +703,13 @@ export const DatabaseProvider: React.FC<{children: React.ReactNode}> = ({ childr
         if (res.data.bimbingan?.length) _setBimbinganData(res.data.bimbingan);
         if (res.data.jadwal?.length) _setJadwalData(res.data.jadwal);
         if (res.data.timeSlots?.length) _setTimeSlotsData(res.data.timeSlots);
-        if (res.data.timeSlots?.length) _setTimeSlotsData(res.data.timeSlots);
         if (res.data.jenisPembayaran?.length) _setJenisPembayaranData(res.data.jenisPembayaran);
         if (res.data.tagihanSiswa?.length) _setTagihanSiswaData(res.data.tagihanSiswa);
         if (res.data.pengeluaranKas?.length) _setPengeluaranKasData(res.data.pengeluaranKas);
         if (res.data.payroll?.length) _setPayrollData(res.data.payroll);
+        if (res.data.guruWaliAssignments?.length) _setGuruWaliAssignments(res.data.guruWaliAssignments);
+        if (res.data.diagnostikBK?.length) _setDiagnostikBKData(res.data.diagnostikBK);
+        if (res.data.tindakLanjutWali?.length) _setTindakLanjutWaliData(res.data.tindakLanjutWali);
       }
       setIsLoading(false);
     };
@@ -576,6 +813,24 @@ export const DatabaseProvider: React.FC<{children: React.ReactNode}> = ({ childr
     gasApiCall('syncAllData', { payload: { type: 'payroll', data } });
   };
 
+  const setGuruWaliAssignments = (data: GuruWaliAssignment[]) => {
+    _setGuruWaliAssignments(data);
+    localStorage.setItem('sims_guru_wali_assignments', JSON.stringify(data));
+    gasApiCall('syncAllData', { payload: { type: 'guruWaliAssignments', data } });
+  };
+
+  const setDiagnostikBKData = (data: DiagnostikBK[]) => {
+    _setDiagnostikBKData(data);
+    localStorage.setItem('sims_diagnostik_bk', JSON.stringify(data));
+    gasApiCall('syncAllData', { payload: { type: 'diagnostikBK', data } });
+  };
+
+  const setTindakLanjutWaliData = (data: TindakLanjutWali[]) => {
+    _setTindakLanjutWaliData(data);
+    localStorage.setItem('sims_tindak_lanjut_wali', JSON.stringify(data));
+    gasApiCall('syncAllData', { payload: { type: 'tindakLanjutWali', data } });
+  };
+
   const setLandingConfig = (config: LandingConfig) => {
     _setLandingConfig(config);
     localStorage.setItem('sims_landing_config', JSON.stringify(config));
@@ -594,6 +849,9 @@ export const DatabaseProvider: React.FC<{children: React.ReactNode}> = ({ childr
     setBimbinganData(INITIAL_BIMBINGAN_DATA);
     setJadwalData(INITIAL_JADWAL_DATA);
     setTimeSlotsData(INITIAL_TIME_SLOTS_DATA);
+    setGuruWaliAssignments(INITIAL_GURU_WALI_ASSIGNMENTS);
+    setDiagnostikBKData(INITIAL_DIAGNOSTIK_BK);
+    setTindakLanjutWaliData(INITIAL_TINDAK_LANJUT_WALI);
     setJenisPembayaranData(INITIAL_JENIS_PEMBAYARAN);
     setTagihanSiswaData(INITIAL_TAGIHAN_SISWA);
     setPengeluaranKasData(INITIAL_PENGELUARAN_KAS);
@@ -615,6 +873,9 @@ export const DatabaseProvider: React.FC<{children: React.ReactNode}> = ({ childr
       bimbinganData, setBimbinganData,
       jadwalData, setJadwalData,
       timeSlotsData, setTimeSlotsData,
+      guruWaliAssignments, setGuruWaliAssignments,
+      diagnostikBKData, setDiagnostikBKData,
+      tindakLanjutWaliData, setTindakLanjutWaliData,
       jenisPembayaranData, setJenisPembayaranData,
       tagihanSiswaData, setTagihanSiswaData,
       pengeluaranKasData, setPengeluaranKasData,
