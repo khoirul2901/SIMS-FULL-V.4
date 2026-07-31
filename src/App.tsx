@@ -20,6 +20,7 @@ import { AbsensiSiswa } from './pages/AbsensiSiswa';
 import { AbsensiGuru } from './pages/AbsensiGuru';
 import { Pelanggaran } from './pages/Pelanggaran';
 import { BimbinganKonseling } from './pages/BimbinganKonseling';
+import { GuruWali } from './pages/GuruWali';
 import { JadwalPelajaran } from './pages/JadwalPelajaran';
 import { Nilai } from './pages/Nilai';
 import { KeuanganDashboard } from './pages/KeuanganDashboard';
@@ -63,6 +64,7 @@ export default function App() {
                 <Route path="akademik/nilai" element={<Nilai />} />
                 <Route path="akademik/pelanggaran" element={<Pelanggaran />} />
                 <Route path="akademik/bimbingan-konseling" element={<BimbinganKonseling />} />
+                <Route path="akademik/guru-wali" element={<GuruWali />} />
                 
                 {/* Keuangan */}
                 <Route path="keuangan/dashboard" element={<KeuanganDashboard />} />
