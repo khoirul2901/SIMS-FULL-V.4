@@ -15,7 +15,8 @@ import {
   Maximize2, 
   Minimize2,
   Camera,
-  RefreshCw
+  RefreshCw,
+  IdCard
 } from 'lucide-react';
 import { scannerFeedback } from '../utils/scannerFeedback';
 import { useHardwareScanner } from '../hooks/useHardwareScanner';
@@ -38,6 +39,7 @@ interface HardScannerStationModalProps {
   targetType: 'siswa' | 'guru';
   jenisAbsen: 'Masuk' | 'Pulang';
   onJenisAbsenChange?: (jenis: 'Masuk' | 'Pulang') => void;
+  onLinkCard?: (code: string) => void;
   summaryStats: {
     hadir: number;
     terlambat?: number;
@@ -64,6 +66,7 @@ export const HardScannerStationModal: React.FC<HardScannerStationModalProps> = (
   targetType,
   jenisAbsen,
   onJenisAbsenChange,
+  onLinkCard,
   summaryStats,
   onScan,
 }) => {
@@ -336,6 +339,19 @@ export const HardScannerStationModal: React.FC<HardScannerStationModalProps> = (
                         {latestRecord.time} WIB
                       </span>
                     </div>
+
+                    {latestRecord.type === 'error' && onLinkCard && (
+                      <div className="pt-2">
+                        <button
+                          type="button"
+                          onClick={() => onLinkCard(latestRecord.code)}
+                          className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 mx-auto transition-all shadow-lg shadow-rose-900/40 cursor-pointer"
+                        >
+                          <IdCard className="w-4 h-4" />
+                          Tautkan Kartu "{latestRecord.code}" ke Siswa
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
