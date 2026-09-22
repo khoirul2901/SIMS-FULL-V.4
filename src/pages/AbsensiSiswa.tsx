@@ -12,12 +12,15 @@ import {
   XCircle, 
   X,
   Volume2,
-  Clock
+  Clock,
+  IdCard
 } from 'lucide-react';
 import { QRScannerModal } from '../components/QRScannerModal';
 import { HardScannerStationModal } from '../components/HardScannerStationModal';
+import { LinkCardModal } from '../components/LinkCardModal';
 import { useHardwareScanner } from '../hooks/useHardwareScanner';
 import { scannerFeedback } from '../utils/scannerFeedback';
+import { findStudentByScannedCode, normalizeScannedCode } from '../utils/studentLookup';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -37,7 +40,7 @@ const getStatusColor = (status: string) => {
 };
 
 export const AbsensiSiswa = () => {
-  const { siswaData, kelasData, absensiData, setAbsensiData } = useDatabase();
+  const { siswaData, setSiswaData, kelasData, absensiData, setAbsensiData } = useDatabase();
   const [selectedKelas, setSelectedKelas] = useState('VII-A');
   const [jenisAbsen, setJenisAbsen] = useState<'Masuk' | 'Pulang'>('Masuk');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -45,6 +48,7 @@ export const AbsensiSiswa = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isStationOpen, setIsStationOpen] = useState(false);
+  const [linkCardModal, setLinkCardModal] = useState<{ isOpen: boolean; code: string }>({ isOpen: false, code: '' });
 
   // Background floating notification when hard scanner fires on the main page
   const [bgNotification, setBgNotification] = useState<{
@@ -102,23 +106,21 @@ export const AbsensiSiswa = () => {
   };
 
   const handleScanStudentQR = useCallback((rawCode: string) => {
-    const cleanCode = rawCode.trim();
-    // Search student by NIS or ID or NISN
-    const student = siswaData.find(s => 
-      s.nis === cleanCode || 
-      (s.nisn && s.nisn === cleanCode) ||
-      (s.id && s.id === cleanCode)
-    );
+    const cleanCode = normalizeScannedCode(rawCode);
+    // Intelligent lookup supporting idKartu, barcode, NIS, NISN, leading zeros, AIM symbology
+    const match = findStudentByScannedCode(siswaData, rawCode);
 
-    if (!student) {
+    if (!match) {
       return {
         success: false,
         type: 'error' as const,
         title: 'Siswa Tidak Ditemukan',
-        message: `NIS / ID "${cleanCode}" tidak terdaftar pada data siswa.`,
+        message: `Barcode / ID "${cleanCode}" tidak terdaftar pada siswa mana pun.`,
         statusBadge: 'Gagal'
       };
     }
+
+    const student = match.student;
 
     // Check existing status
     const existing = absensiData.find(a => a.nis === student.nis && a.tanggal === date && a.jenis === jenisAbsen);
@@ -152,6 +154,43 @@ export const AbsensiSiswa = () => {
       statusBadge: 'Hadir'
     };
   }, [siswaData, absensiData, date, jenisAbsen, selectedKelas]);
+
+  // Handler when user links an unrecognized barcode to a student
+  const handleSaveAndAttendLink = useCallback((studentId: string, cardCode: string) => {
+    const targetStudent = siswaData.find(s => s.id === studentId);
+    if (!targetStudent) return;
+
+    // Persist card code onto student record (both as idKartu and barcode)
+    const updatedSiswaList = siswaData.map(s => {
+      if (s.id === studentId) {
+        return {
+          ...s,
+          idKartu: cardCode,
+          barcode: cardCode
+        };
+      }
+      return s;
+    });
+
+    setSiswaData(updatedSiswaList);
+
+    // Record Hadir attendance
+    handleStatusChange(targetStudent.nis, 'Hadir', targetStudent.kelas);
+    if (targetStudent.kelas && targetStudent.kelas !== selectedKelas) {
+      setSelectedKelas(targetStudent.kelas);
+    }
+
+    scannerFeedback.playSound('success');
+    scannerFeedback.speak(`${targetStudent.nama}, Hadir ${jenisAbsen}`);
+
+    setBgNotification({
+      type: 'success',
+      title: `Kartu Berhasil Ditautkan!`,
+      message: `${targetStudent.nama} (${targetStudent.nis}) • Kelas ${targetStudent.kelas} tercatat Hadir.`,
+      code: cardCode,
+      time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+    });
+  }, [siswaData, setSiswaData, jenisAbsen, selectedKelas]);
 
   // Global Hardware Scanner Listener right on the page (even without opening modals!)
   const handlePageHardwareScan = useCallback((code: string) => {
@@ -220,8 +259,24 @@ export const AbsensiSiswa = () => {
                 <span className="text-[11px] opacity-80 font-mono">{bgNotification.time}</span>
               </div>
               <p className="text-xs mt-1 opacity-90">{bgNotification.message}</p>
-              <div className="mt-1 text-[10px] opacity-75 font-mono">
-                Hard Scanner Scan: {bgNotification.code}
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <span className="text-[10px] opacity-75 font-mono">
+                  Barcode: {bgNotification.code}
+                </span>
+                {bgNotification.type === 'error' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const codeToLink = bgNotification.code;
+                      setBgNotification(null);
+                      setLinkCardModal({ isOpen: true, code: codeToLink });
+                    }}
+                    className="text-[11px] font-semibold bg-white text-rose-900 hover:bg-rose-100 px-2 py-0.5 rounded shadow-sm flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <IdCard className="w-3 h-3 text-rose-700" />
+                    Tautkan Kartu ke Siswa
+                  </button>
+                )}
               </div>
             </div>
             <button 
@@ -440,6 +495,7 @@ export const AbsensiSiswa = () => {
         title={`Scan Kamera Absensi Siswa (${jenisAbsen})`}
         subtitle="Dapat menggunakan Kamera Web/HP atau scanner barcode CLABEL"
         manualPlaceholder="Ketik NIS siswa atau tembak scanner..."
+        onLinkCard={(code) => setLinkCardModal({ isOpen: true, code })}
         onScan={handleScanStudentQR}
       />
 
@@ -451,8 +507,18 @@ export const AbsensiSiswa = () => {
         targetType="siswa"
         jenisAbsen={jenisAbsen}
         onJenisAbsenChange={(jenis) => setJenisAbsen(jenis)}
+        onLinkCard={(code) => setLinkCardModal({ isOpen: true, code })}
         summaryStats={summaryStats}
         onScan={handleScanStudentQR}
+      />
+
+      {/* Modal Tautkan Barcode Kartu Fisik ke Siswa */}
+      <LinkCardModal
+        isOpen={linkCardModal.isOpen}
+        onClose={() => setLinkCardModal({ isOpen: false, code: '' })}
+        cardCode={linkCardModal.code}
+        students={siswaData}
+        onLinkAndAttend={(studentId, code) => handleSaveAndAttendLink(studentId, code)}
       />
     </div>
   );
