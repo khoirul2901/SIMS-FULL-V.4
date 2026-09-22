@@ -26,6 +26,7 @@ import { QRScannerModal } from '../components/QRScannerModal';
 import { HardScannerStationModal } from '../components/HardScannerStationModal';
 import { useHardwareScanner } from '../hooks/useHardwareScanner';
 import { scannerFeedback } from '../utils/scannerFeedback';
+import { normalizeScannedCode } from '../utils/studentLookup';
 
 interface PengaturanScan {
   jamMasukMulai: string;
@@ -184,14 +185,21 @@ export const AbsensiGuru = () => {
 
   // Automatic Evaluation for QR Code Scan via QRScannerModal
   const handleScanGuruQR = (rawCode: string) => {
-    const cleanCode = rawCode.trim();
-    const guru = guruData.find(g => g.nip === cleanCode || (g.id && g.id === cleanCode));
+    const cleanCode = normalizeScannedCode(rawCode);
+    const guru = guruData.find(g => {
+      const gNip = normalizeScannedCode(g.nip || '');
+      const gId = g.id ? normalizeScannedCode(g.id) : '';
+      const gKartu = (g as any).idKartu ? normalizeScannedCode((g as any).idKartu) : '';
+      const gBarcode = (g as any).barcode ? normalizeScannedCode((g as any).barcode) : '';
+      return gNip === cleanCode || gId === cleanCode || gKartu === cleanCode || gBarcode === cleanCode;
+    });
+
     if (!guru) {
       return {
         success: false,
         type: 'error' as const,
         title: 'Guru Tidak Ditemukan',
-        message: `NIP "${cleanCode}" tidak terdaftar dalam data guru.`
+        message: `Barcode / NIP "${cleanCode}" tidak terdaftar dalam data guru.`
       };
     }
 
