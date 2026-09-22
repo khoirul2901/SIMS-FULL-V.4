@@ -696,7 +696,7 @@ export const DatabaseProvider: React.FC<{children: React.ReactNode}> = ({ childr
         if (res.data.kelas?.length) _setKelasData(res.data.kelas);
         if (res.data.pelanggaran?.length) _setPelanggaranData(res.data.pelanggaran);
         if (res.data.absensiSiswa?.length) _setAbsensiData(res.data.absensiSiswa);
-        if (res.data.absensiGuru?.length) _setAbsensiData(res.data.absensiGuru);
+        if (res.data.absensiGuru?.length) _setAbsensiGuruData(res.data.absensiGuru);
         if (res.data.kategoriPelanggaran?.length) _setKategoriPelanggaranData(res.data.kategoriPelanggaran);
         if (res.data.mapel?.length) _setMapelData(res.data.mapel);
         if (res.data.nilai?.length) _setNilaiData(res.data.nilai);
