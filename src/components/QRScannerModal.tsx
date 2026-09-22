@@ -15,7 +15,8 @@ import {
   Barcode,
   Upload,
   Sparkles,
-  Volume1
+  Volume1,
+  IdCard
 } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { scannerFeedback } from '../utils/scannerFeedback';
@@ -36,6 +37,7 @@ interface QRScannerModalProps {
   title: string;
   subtitle?: string;
   manualPlaceholder?: string;
+  onLinkCard?: (code: string) => void;
   onScan: (code: string) => { 
     success: boolean; 
     type?: 'success' | 'error' | 'warning';
@@ -53,6 +55,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   title,
   subtitle = 'Arahkan kamera ke QR Code atau tembak dengan scanner CLABEL',
   manualPlaceholder = 'Ketik NIS / NIP manual atau tembak scanner...',
+  onLinkCard,
   onScan,
 }) => {
   const [activeTab, setActiveTab] = useState<'camera' | 'hardScanner'>('camera');
@@ -206,8 +209,16 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
           Html5QrcodeSupportedFormats.QR_CODE,
           Html5QrcodeSupportedFormats.CODE_128,
           Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.CODE_93,
+          Html5QrcodeSupportedFormats.CODABAR,
+          Html5QrcodeSupportedFormats.ITF,
           Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.UPC_A
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.DATA_MATRIX,
+          Html5QrcodeSupportedFormats.PDF_417,
+          Html5QrcodeSupportedFormats.AZTEC
         ],
         experimentalFeatures: {
           useBarCodeDetectorIfSupported: true
@@ -300,7 +311,24 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
         document.body.appendChild(tempElem);
       }
 
-      const fileScanner = new Html5Qrcode(tempId, false);
+      const fileScanner = new Html5Qrcode(tempId, {
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.QR_CODE,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.CODE_93,
+          Html5QrcodeSupportedFormats.CODABAR,
+          Html5QrcodeSupportedFormats.ITF,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.DATA_MATRIX,
+          Html5QrcodeSupportedFormats.PDF_417,
+          Html5QrcodeSupportedFormats.AZTEC
+        ],
+        verbose: false
+      });
       const decodedText = await fileScanner.scanFile(file, false);
       fileScanner.clear();
 
@@ -572,8 +600,24 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
                 </div>
                 <p className="text-xs mt-0.5 opacity-90 leading-snug">{notification.message}</p>
                 {notification.code && (
-                  <div className="mt-1 text-[10px] font-mono opacity-80 bg-black/20 px-2 py-0.5 rounded w-fit">
-                    ID / Barcode: {notification.code}
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-mono opacity-80 bg-black/30 px-2 py-0.5 rounded">
+                      ID / Barcode: {notification.code}
+                    </span>
+                    {notification.type === 'error' && onLinkCard && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const c = notification.code!;
+                          setNotification(null);
+                          onLinkCard(c);
+                        }}
+                        className="text-[11px] font-semibold bg-white text-rose-900 hover:bg-rose-100 px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <IdCard className="w-3.5 h-3.5 text-rose-700" />
+                        Tautkan Kartu Ini ke Siswa
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
