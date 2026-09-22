@@ -15,10 +15,9 @@ import {
   Barcode,
   Upload,
   Sparkles,
-  ExternalLink,
   Volume1
 } from 'lucide-react';
-import jsQR from 'jsqr';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { scannerFeedback } from '../utils/scannerFeedback';
 import { useHardwareScanner } from '../hooks/useHardwareScanner';
 
@@ -42,6 +41,9 @@ interface QRScannerModalProps {
     type?: 'success' | 'error' | 'warning';
     title: string; 
     message: string; 
+    personName?: string;
+    personSub?: string;
+    statusBadge?: string;
   };
 }
 
@@ -56,13 +58,12 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   const [activeTab, setActiveTab] = useState<'camera' | 'hardScanner'>('camera');
   
   // Camera state
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const manualInputRef = useRef<HTMLInputElement | null>(null);
+  const scannerInstanceRef = useRef<Html5Qrcode | null>(null);
+  const isStartingRef = useRef<boolean>(false);
 
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
+  const [cameras, setCameras] = useState<Array<{ id: string; label: string }>>([]);
   const [selectedCameraId, setSelectedCameraId] = useState<string>('');
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [cameraLoading, setCameraLoading] = useState<boolean>(false);
@@ -84,8 +85,6 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   // Cooldown / Debounce tracking for auto-detection
   const lastScannedCodeRef = useRef<string>('');
   const lastScannedTimeRef = useRef<number>(0);
-  const animationFrameIdRef = useRef<number | null>(null);
-  const isProcessingRef = useRef<boolean>(false);
 
   // Sync sound settings with scannerFeedback
   useEffect(() => {
@@ -143,8 +142,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
 
     scannerFeedback.playSound(resultType);
     if (result.success && voiceEnabled) {
-      // Voice readout of attendee title
-      scannerFeedback.speak(result.title);
+      scannerFeedback.speak(result.personName ? `${result.personName}, Hadir` : result.title);
     }
 
     showToast(resultType, result.title, result.message, code);
@@ -158,247 +156,180 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
     cooldownMs: 1500
   });
 
-  // Stop Camera Stream
-  const stopCamera = useCallback(() => {
-    if (animationFrameIdRef.current) {
-      cancelAnimationFrame(animationFrameIdRef.current);
-      animationFrameIdRef.current = null;
+  // Stop Camera Scanner Cleanly
+  const stopCamera = useCallback(async () => {
+    if (scannerInstanceRef.current) {
+      const scanner = scannerInstanceRef.current;
+      scannerInstanceRef.current = null;
+      try {
+        if (scanner.isScanning) {
+          await scanner.stop();
+        }
+        scanner.clear();
+      } catch (err) {
+        console.warn('Error stopping scanner:', err);
+      }
     }
-    if (stream) {
-      stream.getTracks().forEach(track => {
-        try {
-          track.stop();
-        } catch {}
-      });
-      setStream(null);
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-  }, [stream]);
+    setIsTorchOn(false);
+    setHasTorch(false);
+  }, []);
 
-  // Start Camera Stream with Robust Fallbacks
+  // Start Camera with Html5Qrcode
   const startCamera = useCallback(async (deviceId?: string) => {
-    setCameraError(null);
+    if (isStartingRef.current) return;
+    isStartingRef.current = true;
     setCameraLoading(true);
-    stopCamera();
+    setCameraError(null);
+
+    await stopCamera();
 
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Fitur kamera tidak didukung di browser ini.');
+      const readerElem = document.getElementById('html5-qr-reader');
+      if (!readerElem) {
+        setCameraLoading(false);
+        isStartingRef.current = false;
+        return;
       }
 
-      let mediaStream: MediaStream;
-
-      // Attempt 1: Optimal constraints (environment facing mode or specified device)
+      // Enumerate available video input devices
       try {
-        const constraints: MediaStreamConstraints = {
-          video: deviceId 
-            ? { deviceId: { exact: deviceId } }
-            : { 
-                facingMode: { ideal: 'environment' },
-                width: { ideal: 1280, min: 320 },
-                height: { ideal: 720, min: 240 }
-              },
-          audio: false
-        };
-        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-      } catch (firstErr) {
-        console.warn('Initial camera constraints failed, attempting fallback to generic video:', firstErr);
-        // Attempt 2: Generic fallback for laptops, webcams, or restricted environments
-        mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        const devices = await Html5Qrcode.getCameras();
+        if (devices && devices.length > 0) {
+          setCameras(devices);
+        }
+      } catch (enumErr) {
+        console.warn('Could not enumerate cameras:', enumErr);
       }
 
-      setStream(mediaStream);
+      const html5QrCode = new Html5Qrcode('html5-qr-reader', {
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.QR_CODE,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.UPC_A
+        ],
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true
+        },
+        verbose: false
+      });
+      scannerInstanceRef.current = html5QrCode;
 
-      if (videoRef.current) {
-        const video = videoRef.current;
-        video.srcObject = mediaStream;
-        video.setAttribute('playsinline', 'true');
-        video.setAttribute('autoplay', 'true');
-        video.muted = true;
+      const cameraConfig = deviceId 
+        ? { deviceId: { exact: deviceId } } 
+        : { facingMode: 'environment' };
 
-        video.onloadedmetadata = async () => {
-          try {
-            await video.play();
-          } catch (playErr) {
-            console.warn('Video auto-play warning:', playErr);
-          }
-        };
-      }
+      await html5QrCode.start(
+        cameraConfig,
+        {
+          fps: 15,
+          qrbox: (viewfinderWidth, viewfinderHeight) => {
+            const edge = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.72);
+            return { width: edge, height: edge };
+          },
+          aspectRatio: 1.0,
+        },
+        (decodedText) => {
+          processCode(decodedText);
+        },
+        () => {
+          // Frame decode error (normal for empty frames)
+        }
+      );
 
-      // Check available camera devices
+      // Check torch capability
       try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(d => d.kind === 'videoinput');
-        setCameras(videoDevices);
-      } catch {}
-
-      // Check Torch capability
-      const track = mediaStream.getVideoTracks()[0];
-      if (track && typeof track.getCapabilities === 'function') {
-        try {
-          const capabilities = (track.getCapabilities() || {}) as any;
-          setHasTorch(Boolean(capabilities.torch));
-        } catch {
+        const capabilities = html5QrCode.getRunningTrackCameraCapabilities();
+        if (capabilities && typeof (capabilities as any).torchFeature === 'function') {
+          const tf = (capabilities as any).torchFeature();
+          setHasTorch(Boolean(tf && tf.isSupported && tf.isSupported()));
+        } else {
           setHasTorch(false);
         }
+      } catch {
+        setHasTorch(false);
       }
 
+      setCameraLoading(false);
     } catch (err: any) {
       console.error('Camera Access Error:', err);
       let msg = 'Gagal mengakses kamera. Mohon izinkan izin kamera di browser Anda.';
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError' || String(err).includes('Permission')) {
         msg = 'Izin kamera ditolak. Silakan klik ikon gembok/kamera di address bar browser dan ubah menjadi "Izinkan" (Allow).';
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+      } else if (err?.name === 'NotFoundError' || String(err).includes('NotFound')) {
         msg = 'Perangkat kamera tidak terdeteksi pada perangkat ini.';
-      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+      } else if (err?.name === 'NotReadableError' || String(err).includes('NotReadable')) {
         msg = 'Kamera sedang digunakan oleh aplikasi lain. Tutup aplikasi lain lalu coba lagi.';
+      } else if (typeof err === 'string') {
+        msg = err;
       }
       setCameraError(msg);
-    } finally {
       setCameraLoading(false);
+    } finally {
+      isStartingRef.current = false;
     }
-  }, [stopCamera]);
+  }, [stopCamera, processCode]);
 
-  // Toggle Torch
+  // Toggle Flashlight Torch
   const toggleTorch = async () => {
-    if (!stream) return;
-    const track = stream.getVideoTracks()[0];
-    if (track && hasTorch) {
-      try {
-        const nextState = !isTorchOn;
-        await track.applyConstraints({
-          advanced: [{ torch: nextState } as any]
-        });
-        setIsTorchOn(nextState);
-      } catch (e) {
-        console.error('Torch toggle error:', e);
-      }
+    if (!scannerInstanceRef.current || !hasTorch) return;
+    try {
+      const nextTorch = !isTorchOn;
+      await scannerInstanceRef.current.applyVideoConstraints({
+        advanced: [{ torch: nextTorch } as any]
+      });
+      setIsTorchOn(nextTorch);
+    } catch (e) {
+      console.error('Torch toggle error:', e);
     }
   };
 
-  // Canvas Scan Frame Loop (Native BarcodeDetector + jsQR fallback)
-  useEffect(() => {
-    if (!isOpen || activeTab !== 'camera' || !stream || cameraError) return;
-
-    let isScanning = true;
-    let barcodeDetectorInstance: any = null;
-
-    if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
-      try {
-        barcodeDetectorInstance = new (window as any).BarcodeDetector({
-          formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'ean_8', 'codabar', 'data_matrix']
-        });
-      } catch {
-        barcodeDetectorInstance = null;
-      }
-    }
-
-    const tick = async () => {
-      if (!isScanning) return;
-
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-
-      if (video && video.readyState === video.HAVE_ENOUGH_DATA && !isProcessingRef.current) {
-        // Fast path: Native browser BarcodeDetector if available
-        if (barcodeDetectorInstance) {
-          try {
-            isProcessingRef.current = true;
-            const barcodes = await barcodeDetectorInstance.detect(video);
-            if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
-              processCode(barcodes[0].rawValue);
-            }
-          } catch {
-            // fallback to canvas decoding
-          } finally {
-            isProcessingRef.current = false;
-          }
-        }
-
-        // Standard path: Canvas + jsQR fallback
-        if (canvas) {
-          const ctx = canvas.getContext('2d', { willReadFrequently: true });
-          if (ctx) {
-            const width = video.videoWidth || 640;
-            const height = video.videoHeight || 480;
-            canvas.width = width;
-            canvas.height = height;
-
-            ctx.drawImage(video, 0, 0, width, height);
-            const imageData = ctx.getImageData(0, 0, width, height);
-
-            try {
-              const qrCode = jsQR(imageData.data, imageData.width, imageData.height, {
-                inversionAttempts: 'dontInvert'
-              });
-
-              if (qrCode && qrCode.data) {
-                processCode(qrCode.data);
-              }
-            } catch (qrErr) {
-              // Ignore frame decode error
-            }
-          }
-        }
-      }
-
-      if (isScanning) {
-        animationFrameIdRef.current = requestAnimationFrame(tick);
-      }
-    };
-
-    animationFrameIdRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      isScanning = false;
-      if (animationFrameIdRef.current) {
-        cancelAnimationFrame(animationFrameIdRef.current);
-      }
-    };
-  }, [isOpen, activeTab, stream, cameraError, processCode]);
-
   // Decode Image File uploaded by user
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+    try {
+      const tempId = 'qr-file-decoder-temp';
+      let tempElem = document.getElementById(tempId);
+      if (!tempElem) {
+        tempElem = document.createElement('div');
+        tempElem.id = tempId;
+        tempElem.style.display = 'none';
+        document.body.appendChild(tempElem);
+      }
 
-        ctx.drawImage(img, 0, 0);
-        const imageData = ctx.getImageData(0, 0, img.width, img.height);
-        const qrCode = jsQR(imageData.data, imageData.width, imageData.height);
+      const fileScanner = new Html5Qrcode(tempId, false);
+      const decodedText = await fileScanner.scanFile(file, false);
+      fileScanner.clear();
 
-        if (qrCode && qrCode.data) {
-          processCode(qrCode.data);
-        } else {
-          showToast('error', 'QR Tidak Terdeteksi', 'Pastikan foto QR Code jelas, terang, dan tidak buram.');
-        }
-      };
-      img.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
+      if (decodedText) {
+        processCode(decodedText);
+      } else {
+        showToast('error', 'QR Tidak Terdeteksi', 'Pastikan foto QR / Barcode jelas, terang, dan tidak buram.');
+      }
+    } catch (err) {
+      console.warn('File decode error:', err);
+      showToast('error', 'QR Tidak Terdeteksi', 'Pastikan foto QR / Barcode jelas, terang, dan tidak buram.');
+    } finally {
+      e.target.value = '';
+    }
   };
 
-  // Open/Close Stream Management
+  // Lifecycle management
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
     if (isOpen) {
       if (activeTab === 'camera') {
-        startCamera(selectedCameraId || undefined);
+        // Small delay to ensure container element is mounted in DOM
+        timeoutId = setTimeout(() => {
+          startCamera(selectedCameraId || undefined);
+        }, 80);
       } else {
         stopCamera();
-        // auto-focus manual input for hardware scanner gun
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           manualInputRef.current?.focus();
         }, 100);
       }
@@ -409,9 +340,10 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
     }
 
     return () => {
+      clearTimeout(timeoutId);
       stopCamera();
     };
-  }, [isOpen, activeTab]);
+  }, [isOpen, activeTab, selectedCameraId, startCamera, stopCamera]);
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -507,23 +439,16 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
           /* Viewport Camera & Live Scan Area */
           <div className="relative bg-black flex-1 min-h-[300px] max-h-[380px] flex items-center justify-center overflow-hidden">
             
-            {/* Live Video Feed */}
-            <video
-              ref={videoRef}
-              playsInline
-              autoPlay
-              muted
-              className={`w-full h-full object-cover ${cameraError ? 'hidden' : 'block'}`}
+            {/* Html5Qrcode Reader Mount Target */}
+            <div 
+              id="html5-qr-reader" 
+              className={`w-full h-full flex items-center justify-center overflow-hidden [&_video]:w-full [&_video]:h-full [&_video]:object-cover ${cameraError ? 'hidden' : 'block'}`}
             />
 
-            {/* Hidden Canvas for Frame Capture */}
-            <canvas ref={canvasRef} className="hidden" />
-
-            {/* Scanning Box Target & Line Animation */}
-            {!cameraError && stream && (
+            {/* Scanning Box Target & Reticle Overlay */}
+            {!cameraError && !cameraLoading && (
               <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                {/* Center Scanner Window */}
-                <div className="relative w-56 h-56 sm:w-64 sm:h-64 rounded-2xl border-2 border-indigo-400/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] z-10 overflow-hidden flex items-center justify-center">
+                <div className="relative w-56 h-56 sm:w-64 sm:h-64 rounded-2xl border-2 border-indigo-400/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)] z-10 overflow-hidden flex items-center justify-center">
                   {/* Corner markers */}
                   <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-indigo-400 rounded-tl-lg" />
                   <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-indigo-400 rounded-tr-lg" />
@@ -534,7 +459,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
                   <div className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-indigo-500 via-emerald-400 to-indigo-500 shadow-[0_0_12px_#3b82f6] animate-pulse rounded-full top-0 animate-[scan_2.2s_ease-in-out_infinite]" />
 
                   <p className="text-[11px] font-medium text-slate-200 bg-slate-900/90 px-3 py-1 rounded-full backdrop-blur-sm border border-slate-700/60 mt-auto mb-3 shadow">
-                    Posisikan QR Code di Dalam Kotak
+                    Posisikan Barcode / QR di Dalam Kotak
                   </p>
                 </div>
               </div>
@@ -673,12 +598,11 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
                   value={selectedCameraId}
                   onChange={(e) => {
                     setSelectedCameraId(e.target.value);
-                    startCamera(e.target.value);
                   }}
                   className="bg-slate-800 text-white text-xs py-1 px-2.5 rounded-lg border border-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 truncate max-w-[180px]"
                 >
                   {cameras.map((cam, idx) => (
-                    <option key={cam.deviceId} value={cam.deviceId}>
+                    <option key={cam.id} value={cam.id}>
                       {cam.label || `Kamera ${idx + 1}`}
                     </option>
                   ))}
