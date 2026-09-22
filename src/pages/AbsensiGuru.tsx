@@ -16,10 +16,16 @@ import {
   BookOpen,
   Info,
   ShieldCheck,
-  Edit3
+  Edit3,
+  Barcode,
+  Sparkles,
+  XCircle
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { QRScannerModal } from '../components/QRScannerModal';
+import { HardScannerStationModal } from '../components/HardScannerStationModal';
+import { useHardwareScanner } from '../hooks/useHardwareScanner';
+import { scannerFeedback } from '../utils/scannerFeedback';
 
 interface PengaturanScan {
   jamMasukMulai: string;
@@ -59,6 +65,16 @@ export const AbsensiGuru = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [tempPengaturan, setTempPengaturan] = useState<PengaturanScan>(pengaturan);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isStationOpen, setIsStationOpen] = useState(false);
+
+  // Background floating notification when hard scanner fires on the main page
+  const [bgNotification, setBgNotification] = useState<{
+    type: 'success' | 'warning' | 'error';
+    title: string;
+    message: string;
+    code: string;
+    time: string;
+  } | null>(null);
 
   // Helper mendapatkan nama hari Indonesia
   const getNamaHari = (dateString: string) => {
@@ -255,9 +271,44 @@ export const AbsensiGuru = () => {
       success: true,
       type: (isTerlambat || isLuarJadwal) ? 'warning' as const : 'success' as const,
       title: `Absen ${jenisAbsen} ${calculatedStatus}`,
-      message: `${guru.nama} (${guru.nip}) • Mapel: ${guru.mapel || '-'} • Waktu: ${nowTimeStr}`
+      message: `${guru.nama} (${guru.nip}) • Mapel: ${guru.mapel || '-'} • Waktu: ${nowTimeStr}`,
+      personName: guru.nama,
+      personSub: `NIP: ${guru.nip} • Mapel: ${guru.mapel || '-'}`,
+      statusBadge: calculatedStatus
     };
   };
+
+  // Background Hardware Scanner listener directly on AbsensiGuru page
+  const handlePageHardwareScan = (code: string) => {
+    if (isScannerOpen || isStationOpen) return;
+
+    const result = handleScanGuruQR(code);
+    const resultType = result.type || (result.success ? 'success' : 'error');
+    const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+    scannerFeedback.playSound(resultType);
+    if (result.success && result.personName) {
+      scannerFeedback.speak(`${result.personName}, Hadir ${jenisAbsen}`);
+    }
+
+    setBgNotification({
+      type: resultType,
+      title: result.title,
+      message: result.message,
+      code,
+      time: nowTime
+    });
+
+    setTimeout(() => {
+      setBgNotification(null);
+    }, 4000);
+  };
+
+  useHardwareScanner({
+    onScan: handlePageHardwareScan,
+    enabled: !isScannerOpen && !isStationOpen,
+    minChars: 3
+  });
 
 
   // Stats calculation
@@ -281,9 +332,15 @@ export const AbsensiGuru = () => {
               <UserCheck className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Absensi Guru & Pendidik</h1>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-2xl font-bold text-slate-800">Absensi Guru & Pendidik</h1>
+                <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Hard Scanner (CLABEL) Siap
+                </span>
+              </div>
               <p className="text-sm text-slate-500 mt-0.5">
-                Kelola kehadiran guru via Scan QR otomatis berpatokan jadwal mengajar atau input manual.
+                Kelola kehadiran guru via Scan QR, Scanner CLABEL otomatis berpatokan jadwal mengajar, atau input manual.
               </p>
             </div>
           </div>
@@ -298,7 +355,15 @@ export const AbsensiGuru = () => {
             className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors border border-slate-200"
           >
             <Settings className="w-4 h-4 text-slate-600" />
-            <span>Pengaturan Jam Scan</span>
+            <span>Pengaturan Jam</span>
+          </button>
+
+          <button 
+            onClick={() => setIsStationOpen(true)}
+            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm flex items-center gap-2 shadow-sm transition-colors"
+          >
+            <Barcode className="w-4 h-4" />
+            <span>Station Scanner (CLABEL)</span>
           </button>
 
           <button 
@@ -306,7 +371,7 @@ export const AbsensiGuru = () => {
             className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm flex items-center gap-2 shadow-sm transition-colors"
           >
             <QrCode className="w-4 h-4" />
-            <span>Scan QR Code Guru</span>
+            <span>Scan Kamera</span>
           </button>
         </div>
       </div>
@@ -793,13 +858,67 @@ export const AbsensiGuru = () => {
         </div>
       )}
 
+      {/* Floating Background Hard Scan Notification */}
+      {bgNotification && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-md w-full animate-in slide-in-from-bottom-5 duration-200">
+          <div className={`p-4 rounded-2xl shadow-2xl border flex items-start gap-3 backdrop-blur-md ${
+            bgNotification.type === 'success'
+              ? 'bg-emerald-950/95 border-emerald-500/60 text-emerald-100'
+              : bgNotification.type === 'warning'
+              ? 'bg-amber-950/95 border-amber-500/60 text-amber-100'
+              : 'bg-rose-950/95 border-rose-500/60 text-rose-100'
+          }`}>
+            <div className="shrink-0 mt-0.5">
+              {bgNotification.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
+              {bgNotification.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-400" />}
+              {bgNotification.type === 'error' && <XCircle className="w-5 h-5 text-rose-400" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="font-bold text-sm truncate">{bgNotification.title}</h4>
+                <span className="text-[11px] opacity-80 font-mono">{bgNotification.time}</span>
+              </div>
+              <p className="text-xs mt-1 opacity-90">{bgNotification.message}</p>
+              <div className="mt-1 text-[10px] opacity-75 font-mono">
+                Hard Scanner Scan: {bgNotification.code}
+              </div>
+            </div>
+            <button 
+              onClick={() => setBgNotification(null)}
+              className="p-1 opacity-60 hover:opacity-100 transition-opacity"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* QR Scanner Modal for Guru */}
       <QRScannerModal
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
-        title={`Scan QR Code Absensi Guru (${jenisAbsen})`}
-        subtitle="Otomatis mendeteksi QR Code dan mengevaluasi jam kerja & jadwal mengajar"
-        manualPlaceholder="Atau ketik NIP guru di sini..."
+        title={`Scan Kamera Absensi Guru (${jenisAbsen})`}
+        subtitle="Mendukung kamera HP/Webcam & Scanner Barcode CLABEL"
+        manualPlaceholder="Ketik NIP guru atau tembak scanner..."
+        onScan={handleScanGuruQR}
+      />
+
+      {/* Dedicated Kiosk / Station Hard Scanner (CLABEL) Modal for Guru */}
+      <HardScannerStationModal
+        isOpen={isStationOpen}
+        onClose={() => setIsStationOpen(false)}
+        title={`Station Absensi Guru (${jenisAbsen})`}
+        targetType="guru"
+        jenisAbsen={jenisAbsen}
+        onJenisAbsenChange={(jenis) => setJenisAbsen(jenis)}
+        summaryStats={{
+          total: stats.total,
+          hadir: stats.hadir,
+          terlambat: stats.terlambat,
+          izin: stats.izin,
+          sakit: stats.sakit,
+          alfa: stats.alpa
+        }}
         onScan={handleScanGuruQR}
       />
     </div>
